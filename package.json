@@ -1,6 +1,6 @@
 {
   "name": "key-manager",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "One-click API key rotation across Claude Desktop, VS Code and n8n — plus a full n8n credential manager",
   "main": "server.js",
   "scripts": {
