@@ -1,0 +1,25 @@
+{
+  "name": "key-manager",
+  "version": "2.1.0",
+  "description": "One-click API key rotation across Claude Desktop, VS Code and n8n — plus a full n8n credential manager",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev":   "node --watch server.js"
+  },
+  "keywords": ["n8n", "claude", "lm-studio", "api-key", "credential-manager", "devtools"],
+  "author": "Kris-O",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Kris-O/api-key-manager.git"
+  },
+  "homepage": "https://github.com/Kris-O/api-key-manager#readme",
+  "bugs": {
+    "url": "https://github.com/Kris-O/api-key-manager/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {}
+}

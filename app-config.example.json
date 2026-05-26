@@ -1,0 +1,16 @@
+{
+  "n8nBaseUrl": "http://localhost:5678",
+  "n8nApiKey": "YOUR_N8N_API_KEY_HERE",
+  "n8nCredentials": [
+    {
+      "id": "CREDENTIAL_ID_FROM_N8N",
+      "name": "LM Studio account",
+      "baseUrl": "http://host.docker.internal:1234/v1"
+    }
+  ],
+  "paths": {
+    "claudeDesktop":  "C:\\Users\\YourName\\AppData\\Roaming\\Claude\\claude_desktop_config.json",
+    "vscodeSettings": "C:\\Users\\YourName\\AppData\\Roaming\\Code\\User\\settings.json",
+    "chatModels":     "C:\\Users\\YourName\\AppData\\Roaming\\Code\\User\\chatLanguageModels.json"
+  }
+}

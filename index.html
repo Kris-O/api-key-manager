@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🔑 Key Manager</title>
+<style>
+/* ── Variables ──────────────────────────────────────────────── */
+:root {
+  --bg:        #0f1117;
+  --surface:   #1a1d27;
+  --surface2:  #222636;
+  --border:    #2d3150;
+  --accent:    #6366f1;
+  --accent-h:  #4f52d4;
+  --ok:        #22c55e;
+  --warn:      #f59e0b;
+  --err:       #ef4444;
+  --text:      #e2e8f0;
+  --muted:     #94a3b8;
+  --radius:    8px;
+  --font:      'Segoe UI', system-ui, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: var(--font); font-size: 14px; line-height: 1.5;
+  min-height: 100vh;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Layout ─────────────────────────────────────────────────── */
+.app { max-width: 860px; margin: 0 auto; padding: 24px 16px 48px; }
+
+/* ── Header ─────────────────────────────────────────────────── */
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border);
+}
+.logo { font-size: 1.3rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.version {
+  font-size: 0.7rem; color: var(--muted); background: var(--surface2);
+  padding: 2px 7px; border-radius: 99px;
+}
+
+/* ── Tabs ───────────────────────────────────────────────────── */
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+.tab-btn {
+  background: none; border: none; cursor: pointer; color: var(--muted);
+  font: inherit; font-size: 0.9rem; padding: 8px 16px;
+  border-bottom: 2px solid transparent; transition: color .15s, border-color .15s;
+}
+.tab-btn:hover  { color: var(--text); }
+.tab-btn.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+.pane { display: none; }
+.pane.active { display: block; }
+
+/* ── Card ────────────────────────────────────────────────────── */
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px; margin-bottom: 16px;
+}
+.section-title {
+  font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--muted); margin-bottom: 14px;
+}
+
+/* ── Source rows ─────────────────────────────────────────────── */
+.source-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid var(--border);
+}
+.source-row:last-child { border-bottom: none; }
+.dot {
+  width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; background: var(--err);
+}
+.dot.ok   { background: var(--ok);   box-shadow: 0 0 6px var(--ok); }
+.dot.warn { background: var(--warn); box-shadow: 0 0 6px var(--warn); }
+.source-label   { flex: 1; font-size: 0.88rem; }
+.source-preview { font-family: monospace; font-size: 0.8rem; color: var(--muted); }
+
+/* ── Inputs ─────────────────────────────────────────────────── */
+.input-wrap { position: relative; display: flex; }
+input[type=text], input[type=password], input[type=url],
+input[type=search], textarea, select {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius); color: var(--text);
+  font: inherit; font-size: 0.9rem; padding: 8px 12px;
+  width: 100%; outline: none; transition: border-color .15s;
+}
+input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+textarea { resize: vertical; min-height: 90px; font-family: monospace; font-size: 0.85rem; }
+.search-wrap { position: relative; }
+.search-wrap input { padding-left: 34px; }
+.search-wrap::before {
+  content: '🔍'; font-size: 0.82rem;
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  pointer-events: none; z-index: 1;
+}
+.eye-btn {
+  position: absolute; right: 2px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer; padding: 6px 8px;
+  color: var(--muted); font-size: 0.9rem;
+}
+.eye-btn:hover { color: var(--text); }
+
+/* ── Buttons ─────────────────────────────────────────────────── */
+.btn {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius);
+  color: var(--text); cursor: pointer; font: inherit; font-size: 0.88rem;
+  padding: 7px 14px; transition: background .15s, border-color .15s; white-space: nowrap;
+}
+.btn:hover:not(:disabled) { background: var(--border); }
+.btn:disabled             { opacity: .45; cursor: not-allowed; }
+.btn.primary {
+  background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600;
+}
+.btn.primary:hover:not(:disabled) { background: var(--accent-h); border-color: var(--accent-h); }
+.btn.danger  { border-color: var(--err); color: var(--err); }
+.btn.sm      { padding: 5px 10px; font-size: 0.82rem; }
+.btn-row     { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+
+/* ── Key input ───────────────────────────────────────────────── */
+.key-row { display: flex; gap: 8px; }
+.key-row .input-wrap { flex: 1; }
+.key-row input { padding-right: 38px; font-family: monospace; }
+
+/* ── Log ─────────────────────────────────────────────────────── */
+#log {
+  background: #0a0c12; border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px 16px; font-family: monospace; font-size: 0.82rem;
+  max-height: 280px; overflow-y: auto; display: none; margin-top: 8px;
+}
+.log-head  { padding: 3px 0; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
+.log-entry { padding: 2px 0; display: flex; gap: 8px; }
+.log-ok    { color: var(--ok); }
+.log-err   { color: var(--err); }
+.log-detail { color: var(--muted); margin-left: 20px; font-size: 0.78rem; }
+
+/* ── Credentials pane ────────────────────────────────────────── */
+.cred-toolbar {
+  display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap;
+}
+.cred-toolbar .search-wrap { flex: 1; min-width: 180px; }
+.type-filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.type-chip {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 99px;
+  color: var(--muted); cursor: pointer; font: inherit; font-size: 0.78rem;
+  padding: 3px 11px; transition: all .15s;
+}
+.type-chip:hover  { border-color: var(--accent); color: var(--text); }
+.type-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+
+/* ── Credential item ─────────────────────────────────────────── */
+.cred-item {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); margin-bottom: 8px; overflow: hidden;
+}
+.cred-header { display: flex; align-items: center; gap: 10px; padding: 12px 16px; }
+.cred-info   { flex: 1; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.cred-name   { font-weight: 600; font-size: 0.92rem; }
+.type-badge  {
+  font-size: 0.72rem; padding: 2px 9px; border-radius: 99px;
+  font-weight: 600; color: #fff; white-space: nowrap;
+}
+.badge-custom {
+  font-size: 0.7rem; padding: 2px 7px; border-radius: 99px;
+  color: var(--muted); background: #333; white-space: nowrap;
+}
+.cred-form {
+  border-top: 1px solid var(--border); padding: 16px; background: var(--surface2);
+}
+.field-row { margin-bottom: 12px; }
+.field-row label {
+  display: block; font-size: 0.8rem; color: var(--muted);
+  margin-bottom: 5px; font-weight: 500;
+}
+.field-row label .req  { color: var(--err); }
+.field-row label .hint { font-weight: 400; font-size: 0.75rem; margin-left: 6px; color: var(--muted); }
+.field-row .input-wrap input { padding-right: 38px; }
+.form-actions { display: flex; gap: 8px; margin-top: 14px; }
+
+/* ── Settings ────────────────────────────────────────────────── */
+.settings-group { margin-bottom: 18px; }
+.settings-group label {
+  display: block; font-size: 0.8rem; color: var(--muted); font-weight: 500; margin-bottom: 5px;
+}
+.s-row { display: flex; gap: 8px; align-items: stretch; margin-bottom: 8px; }
+.s-row input { flex: 1; }
+.path-row { display: flex; gap: 8px; align-items: stretch; margin-bottom: 8px; }
+.path-row input { flex: 1; font-size: 0.82rem; font-family: monospace; }
+.path-label {
+  font-size: 0.8rem; color: var(--muted); min-width: 170px; flex-shrink: 0;
+  display: flex; align-items: center;
+}
+
+/* ── Rotation target items ───────────────────────────────────── */
+.rot-item {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 10px 14px; margin-bottom: 8px;
+}
+.rot-item-header { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.rot-item-header input[type=checkbox] { width: 15px; height: 15px; flex-shrink: 0; cursor: pointer; accent-color: var(--accent); }
+.rot-item-name { flex: 1; font-size: 0.88rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rot-url-wrap  { margin-top: 8px; display: none; }
+.rot-url-wrap input { font-size: 0.82rem; font-family: monospace; margin-bottom: 6px; }
+.rot-item.open .rot-url-wrap { display: block; }
+/* LLM endpoint presets */
+.preset-btns { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 6px; }
+.preset-btn {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 99px;
+  color: var(--muted); cursor: pointer; font: inherit; font-size: 0.72rem;
+  padding: 2px 9px; transition: all .15s;
+}
+.preset-btn:hover { border-color: var(--accent); color: var(--text); }
+
+/* ── Highlighted key field (amber) ──────────────────────────── */
+.field-highlight input,
+.field-highlight textarea {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 2px rgba(245,158,11,.12);
+  background: rgba(245,158,11,.04);
+}
+.field-highlight input:focus,
+.field-highlight textarea:focus {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245,158,11,.22);
+}
+.field-highlight label { color: #f59e0b; font-weight: 600; }
+.field-highlight label .req { color: #ef4444; }
+
+/* ── Service preset chips ────────────────────────────────────── */
+.svc-presets {
+  display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; align-items: center;
+}
+.svc-label { font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+.svc-chip {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 99px;
+  color: var(--text); cursor: pointer; font: inherit; font-size: 0.78rem;
+  padding: 3px 11px; transition: all .15s;
+}
+.svc-chip:hover { border-color: var(--accent); background: rgba(99,102,241,.08); }
+.svc-chip.active { border-color: var(--accent); background: rgba(99,102,241,.15); font-weight: 600; }
+
+/* ── Docs link bar ───────────────────────────────────────────── */
+.docs-bar {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(99,102,241,.07); border: 1px solid rgba(99,102,241,.25);
+  border-radius: var(--radius); padding: 8px 12px; margin-bottom: 14px;
+  font-size: 0.82rem;
+}
+.docs-bar a { color: var(--accent); font-weight: 500; }
+
+/* ── Info / error boxes ──────────────────────────────────────── */
+.info-box {
+  background: #1a1f2d; border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 10px 14px; color: var(--muted); font-size: 0.82rem;
+}
+.error-box {
+  background: #2d1a1a; border: 1px solid var(--err); border-radius: var(--radius);
+  padding: 12px 16px; color: var(--err); font-size: 0.88rem; margin-bottom: 12px;
+}
+.empty, .loading { text-align: center; color: var(--muted); padding: 40px 0; font-size: 0.9rem; }
+
+/* ── Toast ───────────────────────────────────────────────────── */
+#toast {
+  position: fixed; bottom: 28px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  color: var(--text); font-size: 0.88rem; padding: 10px 22px;
+  box-shadow: 0 4px 24px #0009; opacity: 0;
+  transition: opacity .25s, transform .25s; pointer-events: none;
+  white-space: nowrap; max-width: calc(100vw - 32px); z-index: 9999;
+}
+#toast.show  { opacity: 1; transform: translateX(-50%) translateY(0); }
+#toast.ok    { border-color: var(--ok); }
+#toast.error { border-color: var(--err); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="logo">🔑 Key Manager <span class="version">v2.1</span></div>
+    <div style="color:var(--muted);font-size:0.8rem;">localhost only · zero deps</div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="rotate"      onclick="switchTab('rotate')">Key Rotation</button>
+    <button class="tab-btn"        data-tab="credentials" onclick="switchTab('credentials')">n8n Credentials</button>
+    <button class="tab-btn"        data-tab="settings"    onclick="switchTab('settings')">⚙ Settings</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       TAB 1 — Key Rotation
+  ══════════════════════════════════════════════════════════════ -->
+  <div id="pane-rotate" class="pane active">
+
+    <div class="card">
+      <div class="section-title">Sources status</div>
+      <div id="sources">
+        <div class="source-row"><div class="dot warn"></div><div class="source-label">Loading…</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">New API key</div>
+      <div class="key-row">
+        <div class="input-wrap">
+          <input type="password" id="newKey" placeholder="Paste new key here…"
+                 autocomplete="off" spellcheck="false">
+          <button class="eye-btn" onclick="togglePwd('newKey')" title="Show / hide">👁</button>
+        </div>
+        <button class="btn" onclick="pasteKey()" title="Paste from clipboard">📋</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn primary" id="rotateBtn" onclick="rotate()">Apply to all sources</button>
+        <span id="rotStatus" style="font-size:0.82rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div id="log"></div>
+
+    <!-- OpenRouter auto-rotate card -->
+    <div class="card" id="orCard" style="display:none;">
+      <div class="section-title">⚡ Auto-rotate — OpenRouter</div>
+      <p class="info-box" style="margin-bottom:12px;">
+        OpenRouter has a <strong>Management API</strong> — Key Manager can generate a new key,
+        rotate all sources automatically, and optionally delete the old key. No manual copy-paste needed.
+      </p>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <input type="text" id="orKeyName" placeholder="Key name (optional)"
+               style="flex:1;min-width:150px;" autocomplete="off">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.85rem;white-space:nowrap;">
+          <input type="checkbox" id="orDeleteOld" style="width:14px;height:14px;accent-color:var(--accent);">
+          Delete old key
+        </label>
+        <button class="btn primary" onclick="orAutoRotate()" id="orRotateBtn">🔄 Generate &amp; rotate</button>
+      </div>
+      <div id="orLog" style="margin-top:10px;display:none;"></div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       TAB 2 — n8n Credentials
+  ══════════════════════════════════════════════════════════════ -->
+  <div id="pane-credentials" class="pane">
+
+    <div class="cred-toolbar">
+      <div class="search-wrap">
+        <input type="search" id="credSearch" placeholder="Search by name or type…" oninput="filterCreds()">
+      </div>
+      <button class="btn sm" onclick="loadCredentials()">↻ Refresh</button>
+    </div>
+
+    <div id="typeFilters" class="type-filters"></div>
+    <div id="credList"><div class="empty">Configure n8n API key in Settings, then refresh.</div></div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       TAB 3 — Settings
+  ══════════════════════════════════════════════════════════════ -->
+  <div id="pane-settings" class="pane">
+
+    <div class="card">
+      <div class="section-title">n8n connection</div>
+      <div class="settings-group">
+        <label>API Key <span style="font-size:0.75rem;font-weight:400;">(generate in n8n → Settings → n8n API)</span></label>
+        <div class="input-wrap" style="margin-bottom:10px;">
+          <input type="password" id="s-apiKey" placeholder="eyJhbGci…" autocomplete="off">
+          <button class="eye-btn" onclick="togglePwd('s-apiKey')">👁</button>
+        </div>
+        <label>Base URL</label>
+        <div class="s-row">
+          <input type="url" id="s-baseUrl" placeholder="http://localhost:5678">
+          <button class="btn sm" onclick="testN8n()">Test connection</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Local file paths</div>
+      <div id="pathRows"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">OpenRouter auto-rotation <span style="font-size:0.7rem;font-weight:400;color:var(--ok);">⚡ API supported</span></div>
+      <div class="settings-group">
+        <label>Management API Key <span style="font-size:0.75rem;font-weight:400;">(openrouter.ai → Keys → Create management key)</span></label>
+        <div class="input-wrap">
+          <input type="password" id="s-orMgmtKey" placeholder="sk-or-mgmt-…" autocomplete="off">
+          <button class="eye-btn" onclick="togglePwd('s-orMgmtKey')">👁</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Rotation targets (n8n)</div>
+      <p class="info-box" style="margin-bottom:14px;">
+        Credentials checked here are included in bulk key rotation (<em>Apply to all sources</em>).
+        Optionally specify a <strong>Base URL</strong> for OpenAI-compatible endpoints (e.g. LM Studio).
+      </p>
+      <div class="btn-row" style="margin-bottom:12px;margin-top:0;">
+        <button class="btn sm" onclick="discoverForSettings()">📡 Load from n8n</button>
+      </div>
+      <div id="rotTargets"><div class="empty" style="padding:14px 0;">No rotation targets yet.</div></div>
+    </div>
+
+    <div style="text-align:right; margin-top: 4px;">
+      <button class="btn primary" onclick="saveSettings()">Save settings</button>
+    </div>
+
+  </div>
+
+</div><!-- /.app -->
+<div id="toast"></div>
+
+<script>
+/* ── Globals ────────────────────────────────────────────────── */
+let schemas    = {};
+let allCreds   = [];
+let activeType = 'all';
+
+const PATH_LABELS = {
+  claudeDesktop:  'Claude Desktop',
+  vscodeSettings: 'VS Code settings.json',
+  chatModels:     'VS Code chatLanguageModels',
+};
+
+const TYPE_COLORS = {
+  openAiApi:       '#10b981',
+  httpBasicAuth:   '#3b82f6',
+  httpHeaderAuth:  '#8b5cf6',
+  bearerToken:     '#f59e0b',
+  apiKeyAuth:      '#06b6d4',
+  n8nApi:          '#ec4899',
+  slackApi:        '#36c5f0',
+  githubApi:       '#6e7681',
+  telegramApi:     '#229ed9',
+  googleOAuth2Api: '#ea4335',
+};
+const FALLBACK_COLORS = ['#6366f1','#a855f7','#f97316','#84cc16','#14b8a6','#f43f5e'];
+const _tcache = {}; let _tcidx = 0;
+function typeColor(t) {
+  if (TYPE_COLORS[t]) return TYPE_COLORS[t];
+  if (!_tcache[t]) _tcache[t] = FALLBACK_COLORS[_tcidx++ % FALLBACK_COLORS.length];
+  return _tcache[t];
+}
+
+/* ── Tab switching ──────────────────────────────────────────── */
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('pane-' + name).classList.add('active');
+  if (name === 'credentials' && !allCreds.length) loadCredentials();
+  if (name === 'settings') loadSettings();
+}
+
+/* ── Utilities ──────────────────────────────────────────────── */
+function esc(s)  { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escA(s) { return String(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+let _tt;
+function toast(msg, type = 'ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + (type === 'error' ? 'error' : 'ok');
+  clearTimeout(_tt);
+  _tt = setTimeout(() => { el.className = ''; }, 3400);
+}
+
+function togglePwd(id) {
+  const el = document.getElementById(id);
+  if (el) el.type = el.type === 'password' ? 'text' : 'password';
+}
+
+async function pasteKey() {
+  try {
+    const t = await navigator.clipboard.readText();
+    document.getElementById('newKey').value = t.trim();
+    toast('Key pasted', 'ok');
+  } catch { toast('Clipboard blocked — paste manually (Ctrl+V)', 'error'); }
+}
+
+/* ── Status ─────────────────────────────────────────────────── */
+async function loadStatus() {
+  try {
+    const d = await fetch('/api/status').then(r => r.json());
+    document.getElementById('sources').innerHTML = d.map(s => {
+      const hasData = s.id === 'n8n' ? (s.configured && s.credCount > 0) : (s.exists && s.preview);
+      const warn    = s.id === 'n8n' ? (s.configured && !s.credCount) : (s.exists && !s.preview);
+      const dot     = hasData ? 'ok' : (warn ? 'warn' : '');
+      return `<div class="source-row">
+        <div class="dot ${dot}"></div>
+        <div class="source-label">${esc(s.label)}</div>
+        <div class="source-preview">${s.preview
+          ? esc(s.preview)
+          : '<span style="color:var(--err);font-size:0.78rem;">not configured</span>'}</div>
+      </div>`;
+    }).join('');
+  } catch(e) { console.error(e); }
+}
+
+/* ── Rotation ───────────────────────────────────────────────── */
+async function rotate() {
+  const key = (document.getElementById('newKey').value || '').trim();
+  if (!key)           { toast('Enter a key first', 'error'); return; }
+  if (key.length < 6) { toast('Key too short (min 6 chars)', 'error'); return; }
+
+  const btn = document.getElementById('rotateBtn');
+  const st  = document.getElementById('rotStatus');
+  btn.disabled = true; btn.textContent = 'Applying…'; st.textContent = '';
+
+  try {
+    const res = await fetch('/api/rotate', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ newKey: key })
+    }).then(r => r.json());
+
+    const log = document.getElementById('log');
+    log.style.display = 'block';
+    log.innerHTML =
+      `<div class="log-head">Rotation: ${esc(key.slice(0,14))}…</div>` +
+      res.results.map(x => `
+        <div class="log-entry ${x.ok ? 'log-ok' : 'log-err'}">
+          <span>${x.ok ? '✓' : '✗'}</span>
+          <span>${esc(x.label)}</span>
+        </div>
+        ${x.detail ? `<div class="log-detail">— ${esc(x.detail)}</div>` : ''}
+        ${x.error  ? `<div class="log-detail" style="color:var(--err)">— ${esc(x.error)}</div>` : ''}
+      `).join('');
+
+    const allOk = res.results.every(r => r.ok);
+    st.textContent = allOk ? '✓ All updated' : '⚠ Some failed';
+    st.style.color  = allOk ? 'var(--ok)' : 'var(--warn)';
+    toast(allOk ? '✓ All sources updated' : '⚠ Some sources failed', allOk ? 'ok' : 'error');
+    loadStatus();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  finally    { btn.disabled = false; btn.textContent = 'Apply to all sources'; }
+}
+
+/* ── Credentials pane ───────────────────────────────────────── */
+async function loadCredentials() {
+  document.getElementById('credList').innerHTML    = '<div class="loading">Loading…</div>';
+  document.getElementById('typeFilters').innerHTML = '';
+  allCreds = [];
+
+  if (!Object.keys(schemas).length) {
+    schemas = await fetch('/api/n8n/schemas').then(r => r.json()).catch(() => ({}));
+  }
+
+  let d;
+  try { d = await fetch('/api/n8n/credentials').then(r => r.json()); }
+  catch(e) { d = { ok: false, error: e.message }; }
+
+  if (!d.ok) {
+    document.getElementById('credList').innerHTML =
+      `<div class="error-box">⚠ ${esc(d.error)}</div>
+       <p class="info-box">Configure the n8n API key in
+         <a href="#" onclick="switchTab('settings');return false;">Settings</a>.</p>`;
+    return;
+  }
+
+  allCreds = d.credentials;
+  buildFilters();
+  renderCreds();
+}
+
+function buildFilters() {
+  const types = [...new Set(allCreds.map(c => c.type))];
+  document.getElementById('typeFilters').innerHTML =
+    `<button class="type-chip active" data-type="all" onclick="setFilter('all')">All (${allCreds.length})</button>` +
+    types.map(t => {
+      const label = schemas[t]?.label || t;
+      const cnt   = allCreds.filter(c => c.type === t).length;
+      return `<button class="type-chip" data-type="${escA(t)}" onclick="setFilter('${escA(t)}')">${esc(label)} (${cnt})</button>`;
+    }).join('');
+}
+
+function setFilter(type) {
+  activeType = type;
+  document.querySelectorAll('.type-chip').forEach(c => c.classList.toggle('active', c.dataset.type === type));
+  renderCreds();
+}
+
+function filterCreds() { renderCreds(); }
+
+function renderCreds() {
+  const q = (document.getElementById('credSearch')?.value || '').toLowerCase();
+  const list = allCreds.filter(c =>
+    (activeType === 'all' || c.type === activeType) &&
+    (!q || c.name.toLowerCase().includes(q) || c.type.toLowerCase().includes(q))
+  );
+
+  if (!list.length) {
+    document.getElementById('credList').innerHTML = '<div class="empty">No credentials match the filter.</div>';
+    return;
+  }
+
+  document.getElementById('credList').innerHTML = list.map(c => `
+    <div class="cred-item" id="ci-${escA(c.id)}">
+      <div class="cred-header">
+        <div class="cred-info">
+          <span class="cred-name">${esc(c.name)}</span>
+          <span class="type-badge" style="background:${typeColor(c.type)}">${esc(c.typeLabel)}</span>
+          ${!c.schemaKnown ? '<span class="badge-custom">custom schema</span>' : ''}
+        </div>
+        <button class="btn sm" onclick="toggleForm('${escA(c.id)}','${escA(c.type)}','${escA(c.name)}')">Edit ▾</button>
+      </div>
+      <div class="cred-form" id="cf-${escA(c.id)}" style="display:none;"></div>
+    </div>
+  `).join('');
+}
+
+function toggleForm(id, type, name) {
+  const el = document.getElementById('cf-' + id);
+  if (!el) return;
+  if (el.style.display !== 'none') { el.style.display = 'none'; return; }
+
+  const schema = schemas[type];
+  let html = '';
+
+  if (schema) {
+    // ── Docs link bar ──────────────────────────────────────────
+    if (schema.docsUrl) {
+      html += `<div class="docs-bar">
+        📖 <a href="${escA(schema.docsUrl)}" target="_blank" rel="noopener">Get API key — ${esc(schema.label)} documentation</a>
+      </div>`;
+    }
+
+    // ── Service presets (e.g. Brave Search for httpHeaderAuth) ─
+    if (schema.servicePresets?.length) {
+      html += `<div class="svc-presets">
+        <span class="svc-label">Quick fill:</span>` +
+        schema.servicePresets.map((p, pi) => `
+          <button type="button" class="svc-chip"
+                  id="svc-${escA(id)}-${pi}"
+                  onclick="applySvcPreset('${escA(id)}','${escA(type)}',${pi})"
+          >${esc(p.icon || '')} ${esc(p.name)}</button>`
+        ).join('') +
+      `</div>`;
+    }
+
+    // ── Fields ─────────────────────────────────────────────────
+    html += schema.fields.map(f => {
+      const isPass   = f.type === 'password';
+      const isReq    = f.required && !('default' in f);
+      const hlClass  = f.highlight ? ' field-highlight' : '';
+      return `<div class="field-row${hlClass}">
+        <label>${esc(f.label)}${isReq ? ' <span class="req">*</span>' : ''}</label>
+        <div class="input-wrap">
+          <input type="${isPass ? 'password' : (f.type === 'url' ? 'url' : 'text')}"
+                 id="ff-${escA(id)}-${escA(f.key)}"
+                 placeholder="${escA(f.placeholder || (f.default !== undefined ? String(f.default) : ''))}"
+                 autocomplete="off" spellcheck="false">
+          ${isPass ? `<button type="button" class="eye-btn" onclick="togglePwd('ff-${escA(id)}-${escA(f.key)}')">👁</button>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    html = `<div class="field-row">
+      <label>Credential data (JSON) <span class="req">*</span>
+        <span class="hint">No built-in schema for "${esc(type)}" — enter raw JSON</span>
+      </label>
+      <textarea id="ff-${escA(id)}-json" placeholder='{\n  "apiKey": "..."\n}' spellcheck="false"></textarea>
+    </div>`;
+  }
+
+  html += `<div class="form-actions">
+    <button class="btn primary" id="savebtn-${escA(id)}"
+            onclick="saveCred('${escA(id)}','${escA(type)}','${escA(name)}')">Save</button>
+    <button class="btn" onclick="document.getElementById('cf-${escA(id)}').style.display='none'">Cancel</button>
+  </div>`;
+
+  el.innerHTML = html;
+  el.style.display = 'block';
+
+  // Focus the first highlighted (key) field, else first input
+  el.querySelector('.field-highlight input') ?.focus()
+    || el.querySelector('input,textarea')?.focus();
+}
+
+// Apply a service preset: pre-fill documented fields, focus the key field
+function applySvcPreset(id, type, presetIdx) {
+  const schema = schemas[type];
+  const preset = schema?.servicePresets?.[presetIdx];
+  if (!preset) return;
+
+  // Mark active chip
+  document.querySelectorAll(`[id^="svc-${id}-"]`).forEach((c, i) =>
+    c.classList.toggle('active', i === presetIdx));
+
+  // Pre-fill documented fields
+  for (const [key, val] of Object.entries(preset.fields || {})) {
+    const inp = document.getElementById(`ff-${id}-${key}`);
+    if (inp) inp.value = val;
+  }
+
+  // Update placeholder on highlight field with service-specific example
+  const hlInput = document.querySelector(`#cf-${id} .field-highlight input`);
+  if (hlInput && preset.placeholder !== undefined) {
+    hlInput.placeholder = preset.placeholder || '';
+  }
+
+  // Show docs bar dynamically
+  const docsBar = document.querySelector(`#cf-${id} .docs-bar`);
+  if (preset.docsUrl) {
+    const docsHtml = `📖 <a href="${escA(preset.docsUrl)}" target="_blank" rel="noopener">Get API key — ${esc(preset.name)} documentation</a>`;
+    if (docsBar) docsBar.innerHTML = docsHtml;
+    else {
+      const bar = document.createElement('div');
+      bar.className = 'docs-bar';
+      bar.innerHTML = docsHtml;
+      document.getElementById('cf-' + id)?.insertAdjacentElement('afterbegin', bar);
+    }
+  }
+
+  // Focus the key field
+  hlInput?.focus();
+}
+
+async function saveCred(id, type, name) {
+  const schema = schemas[type];
+  let data;
+
+  if (schema) {
+    data = {};
+    for (const f of schema.fields) {
+      const val = document.getElementById(`ff-${id}-${f.key}`)?.value;
+      if (val !== undefined && val !== '') data[f.key] = val;
+    }
+    const missing = schema.fields.filter(f => f.required && !('default' in f) && !data[f.key]);
+    if (missing.length) { toast('Required: ' + missing.map(f => f.label).join(', '), 'error'); return; }
+  } else {
+    try   { data = JSON.parse(document.getElementById(`ff-${id}-json`).value); }
+    catch { toast('Invalid JSON', 'error'); return; }
+  }
+
+  const btn = document.getElementById('savebtn-' + id);
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  try {
+    const res = await fetch(`/api/n8n/credentials/${id}`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ name, type, data })
+    }).then(r => r.json());
+
+    if (res.ok) {
+      toast(`✓ "${name}" updated`, 'ok');
+      document.getElementById('cf-' + id).style.display = 'none';
+    } else {
+      toast('✗ ' + res.error, 'error');
+      btn.disabled = false; btn.textContent = 'Save';
+    }
+  } catch(e) {
+    toast('Error: ' + e.message, 'error');
+    btn.disabled = false; btn.textContent = 'Save';
+  }
+}
+
+/* ── Settings pane ──────────────────────────────────────────── */
+async function loadSettings() {
+  try {
+    const cfg = await fetch('/api/config').then(r => r.json());
+    document.getElementById('s-apiKey').value    = cfg.n8nApiKey         || '';
+    document.getElementById('s-baseUrl').value   = cfg.n8nBaseUrl        || '';
+    document.getElementById('s-orMgmtKey').value = cfg.openRouterMgmtKey || '';
+    // Show/hide OpenRouter auto-rotate card
+    const orCard = document.getElementById('orCard');
+    if (orCard) orCard.style.display = cfg.openRouterMgmtKey ? 'block' : 'none';
+
+    document.getElementById('pathRows').innerHTML = Object.entries(PATH_LABELS).map(([k, lbl]) => `
+      <div class="path-row">
+        <span class="path-label">${esc(lbl)}</span>
+        <input type="text" id="path-${k}" value="${escA(cfg.paths?.[k] || '')}" spellcheck="false" placeholder="Path to file…">
+      </div>
+    `).join('');
+
+    renderRotTargets(cfg.n8nCredentials || []);
+  } catch(e) { console.error(e); }
+}
+
+const LLM_PRESETS = [
+  { label: 'LM Studio',    url: 'http://localhost:1234/v1'  },
+  { label: 'Ollama',       url: 'http://localhost:11434/v1' },
+  { label: 'Jan',          url: 'http://localhost:1337/v1'  },
+  { label: 'GPT4All',      url: 'http://localhost:4891/v1'  },
+  { label: 'Llamafile',    url: 'http://localhost:8080/v1'  },
+  { label: 'AnythingLLM',  url: 'http://localhost:3001/v1'  },
+  { label: 'Docker',       url: 'http://host.docker.internal:1234/v1' },
+];
+
+function presetBtnsHtml() {
+  return `<div class="preset-btns">` +
+    LLM_PRESETS.map(p => `<button type="button" class="preset-btn"
+      onclick="this.closest('.rot-url-wrap').querySelector('.rot-url-input').value='${escA(p.url)}'"
+    >${esc(p.label)}</button>`).join('') +
+  `</div>`;
+}
+
+function renderRotTargets(targets) {
+  const el = document.getElementById('rotTargets');
+  if (!targets.length) {
+    el.innerHTML = '<div class="empty" style="padding:12px 0;">No rotation targets yet — click "Load from n8n".</div>';
+    return;
+  }
+  el.innerHTML = targets.map(c => `
+    <div class="rot-item open" data-cred-id="${escA(c.id)}" data-cred-name="${escA(c.name)}">
+      <div class="rot-item-header">
+        <input type="checkbox" class="rot-check" checked
+               onchange="this.closest('.rot-item').classList.toggle('open',this.checked)">
+        <label class="rot-item-name" title="${escA(c.name)}">${esc(c.name)}</label>
+        <button class="btn sm danger" onclick="this.closest('.rot-item').remove()">✕</button>
+      </div>
+      <div class="rot-url-wrap">
+        ${presetBtnsHtml()}
+        <input type="url" class="rot-url-input" value="${escA(c.baseUrl || '')}"
+               placeholder="Base URL (e.g. http://localhost:1234/v1)">
+      </div>
+    </div>
+  `).join('');
+}
+
+async function discoverForSettings() {
+  const key = (document.getElementById('s-apiKey').value || '').trim();
+  const url = (document.getElementById('s-baseUrl').value || '').trim() || 'http://localhost:5678';
+  if (!key) { toast('Enter n8n API key first', 'error'); return; }
+
+  // Persist new key/url before fetching
+  await fetch('/api/config', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ n8nApiKey: key, n8nBaseUrl: url })
+  });
+
+  let d;
+  try { d = await fetch('/api/n8n/discover').then(r => r.json()); }
+  catch(e) { toast('Error: ' + e.message, 'error'); return; }
+
+  if (!d.ok) { toast('✗ ' + d.error, 'error'); return; }
+  // Collect IDs already in the list — don't duplicate
+  const existing = new Set(
+    [...document.querySelectorAll('#rotTargets .rot-item')].map(el => el.dataset.credId).filter(Boolean)
+  );
+  const newCreds = d.credentials.filter(c => !existing.has(c.id));
+
+  if (!newCreds.length) {
+    toast(`All ${d.credentials.length} credential(s) already in the list`, 'ok');
+    return;
+  }
+
+  const container = document.getElementById('rotTargets');
+  // Remove empty-state placeholder if present
+  const emptyMsg = container.querySelector('.empty');
+  if (emptyMsg) emptyMsg.remove();
+
+  container.insertAdjacentHTML('beforeend', newCreds.map(c => `
+    <div class="rot-item" data-cred-id="${escA(c.id)}" data-cred-name="${escA(c.name)}">
+      <div class="rot-item-header">
+        <input type="checkbox" class="rot-check"
+               onchange="this.closest('.rot-item').classList.toggle('open',this.checked)">
+        <label class="rot-item-name" title="${escA(c.name)}">${esc(c.name)}</label>
+        <span class="type-badge" style="background:${typeColor(c.type)};font-size:0.7rem;padding:2px 7px;">${esc(c.type)}</span>
+        <button class="btn sm danger" onclick="this.closest('.rot-item').remove()">✕</button>
+      </div>
+      <div class="rot-url-wrap">
+        ${presetBtnsHtml()}
+        <input type="url" class="rot-url-input"
+               placeholder="Base URL (e.g. http://localhost:1234/v1)">
+      </div>
+    </div>
+  `).join(''));
+
+  toast(`Added ${newCreds.length} new credential(s) — check those you want to include`, 'ok');
+}
+
+async function testN8n() {
+  const key = (document.getElementById('s-apiKey').value || '').trim();
+  const url = (document.getElementById('s-baseUrl').value || '').trim() || 'http://localhost:5678';
+  if (!key) { toast('Enter API key first', 'error'); return; }
+
+  await fetch('/api/config', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ n8nApiKey: key, n8nBaseUrl: url })
+  });
+  const d = await fetch('/api/n8n/discover').then(r => r.json()).catch(e => ({ ok:false, error:e.message }));
+  if (d.ok) toast(`✓ Connected — ${d.credentials.length} credential(s)`, 'ok');
+  else      toast('✗ ' + d.error, 'error');
+}
+
+async function saveSettings() {
+  const apiKey  = (document.getElementById('s-apiKey').value  || '').trim();
+  const baseUrl = (document.getElementById('s-baseUrl').value || '').trim();
+
+  const paths = {};
+  for (const k of Object.keys(PATH_LABELS)) {
+    const v = document.getElementById('path-' + k)?.value.trim();
+    if (v) paths[k] = v;
+  }
+
+  // Collect rotation targets — read directly from DOM via classes, no ID fragility
+  const n8nCredentials = [];
+  document.querySelectorAll('#rotTargets .rot-item').forEach(el => {
+    const cbx    = el.querySelector('.rot-check');
+    if (!cbx?.checked) return;
+    const credId   = el.dataset.credId;
+    const credName = el.dataset.credName || el.querySelector('.rot-item-name')?.textContent.trim() || '';
+    const urlEl    = el.querySelector('.rot-url-input');
+    if (credId) {
+      n8nCredentials.push({ id: credId, name: credName, baseUrl: urlEl?.value.trim() || '' });
+    }
+  });
+
+  const orMgmtKey = (document.getElementById('s-orMgmtKey').value || '').trim();
+  const body = { n8nBaseUrl: baseUrl || 'http://localhost:5678', n8nCredentials, paths };
+  if (apiKey    && !apiKey.endsWith('...'))    body.n8nApiKey          = apiKey;
+  if (orMgmtKey && !orMgmtKey.endsWith('...')) body.openRouterMgmtKey = orMgmtKey;
+
+  const res = await fetch('/api/config', {
+    method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+  }).then(r => r.json()).catch(e => ({ ok:false, error:e.message }));
+
+  if (res.ok) { toast('✓ Settings saved', 'ok'); loadStatus(); }
+  else        { toast('✗ ' + res.error, 'error'); }
+}
+
+/* ── OpenRouter auto-rotate ─────────────────────────────────── */
+async function orAutoRotate() {
+  const btn = document.getElementById('orRotateBtn');
+  btn.disabled = true; btn.textContent = 'Generating…';
+
+  const res = await fetch('/api/openrouter/rotate', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      keyName:   (document.getElementById('orKeyName')?.value || '').trim() || null,
+      deleteOld: document.getElementById('orDeleteOld')?.checked || false,
+    })
+  }).then(r => r.json()).catch(e => ({ ok: false, error: e.message }));
+
+  const logEl = document.getElementById('orLog');
+  logEl.style.display = 'block';
+
+  if (!res.ok && !res.results) {
+    logEl.innerHTML = `<div class="error-box">✗ ${esc(res.error)}</div>`;
+    btn.disabled = false; btn.textContent = '🔄 Generate & rotate';
+    return;
+  }
+
+  logEl.innerHTML =
+    `<div class="log-head">New key: ${esc(res.newKeyMasked || '?')} — hash: ${esc((res.newKeyHash||'').slice(0,12))}…</div>` +
+    (res.results || []).map(x => `
+      <div class="log-entry ${x.ok ? 'log-ok' : 'log-err'}">
+        <span>${x.ok ? '✓' : '✗'}</span><span>${esc(x.label)}</span>
+      </div>
+      ${x.detail ? `<div class="log-detail">— ${esc(x.detail)}</div>` : ''}
+      ${x.error  ? `<div class="log-detail" style="color:var(--err)">— ${esc(x.error)}</div>` : ''}
+    `).join('') +
+    (res.deleteResult ? `<div class="log-entry ${res.deleteResult.ok ? 'log-ok':'log-err'}">
+      <span>${res.deleteResult.ok ? '✓':'✗'}</span>
+      <span>${esc(res.deleteResult.detail || res.deleteResult.error || '')}</span>
+    </div>` : '');
+
+  toast(res.ok ? '✓ OpenRouter key rotated' : '⚠ Some sources failed', res.ok ? 'ok' : 'error');
+  loadStatus();
+  btn.disabled = false; btn.textContent = '🔄 Generate & rotate';
+}
+
+/* ── Init ───────────────────────────────────────────────────── */
+loadStatus();
+loadSettings();
+</script>
+</body>
+</html>
