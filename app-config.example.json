@@ -8,9 +8,17 @@
       "baseUrl": "http://host.docker.internal:1234/v1"
     }
   ],
+  "openRouterMgmtKey": "",
   "paths": {
     "claudeDesktop":  "C:\\Users\\YourName\\AppData\\Roaming\\Claude\\claude_desktop_config.json",
     "vscodeSettings": "C:\\Users\\YourName\\AppData\\Roaming\\Code\\User\\settings.json",
-    "chatModels":     "C:\\Users\\YourName\\AppData\\Roaming\\Code\\User\\chatLanguageModels.json"
-  }
+    "chatModels":     "C:\\Users\\YourName\\AppData\\Roaming\\Code\\User\\chatLanguageModels.json",
+    "cursor":         "C:\\Users\\YourName\\AppData\\Roaming\\Cursor\\User\\settings.json",
+    "cursorChatModels": "C:\\Users\\YourName\\AppData\\Roaming\\Cursor\\User\\chatLanguageModels.json",
+    "windsurf":       "C:\\Users\\YourName\\AppData\\Roaming\\Windsurf\\User\\settings.json",
+    "continuedev":    "C:\\Users\\YourName\\.continue\\config.json",
+    "aider":          "C:\\Users\\YourName\\.aider.conf.yml",
+    "dotenv":         ""
+  },
+  "driverEnabled": {}
 }
