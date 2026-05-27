@@ -6,7 +6,7 @@ const path    = require('path');
 const os      = require('os');
 const { execSync } = require('child_process');
 
-const VERSION  = '2.3.0';
+const VERSION  = '2.4.0';
 const PORT     = Number(process.env.KM_PORT) || 7432;
 const DIR      = __dirname;
 const CFG_PATH     = path.join(DIR, 'app-config.json');
@@ -139,6 +139,108 @@ const CRED_SCHEMAS = {
   httpMultipleHeadersAuth: {
     label: 'HTTP Multiple Headers',
     fields: [{ key: 'headers', label: 'Headers JSON (array of {name, value})', type: 'text', required: true }]
+  },
+
+  // ── AI providers ───────────────────────────────────────────
+  anthropicApi: {
+    label: 'Anthropic (Claude)',
+    docsUrl: 'https://console.anthropic.com/settings/keys',
+    fields: [{ key: 'apiKey', label: 'API Key', type: 'password', required: true, highlight: true, placeholder: 'sk-ant-api03-...' }]
+  },
+  huggingFaceApi: {
+    label: 'HuggingFace',
+    docsUrl: 'https://huggingface.co/settings/tokens',
+    fields: [{ key: 'accessToken', label: 'Access Token', type: 'password', required: true, highlight: true, placeholder: 'hf_...' }]
+  },
+  mistralCloudApi: {
+    label: 'Mistral AI',
+    docsUrl: 'https://console.mistral.ai/api-keys/',
+    fields: [{ key: 'apiKey', label: 'API Key', type: 'password', required: true, highlight: true }]
+  },
+  groqApi: {
+    label: 'Groq',
+    docsUrl: 'https://console.groq.com/keys',
+    fields: [{ key: 'apiKey', label: 'API Key', type: 'password', required: true, highlight: true, placeholder: 'gsk_...' }]
+  },
+  replicateApi: {
+    label: 'Replicate',
+    docsUrl: 'https://replicate.com/account/api-tokens',
+    fields: [{ key: 'apiKey', label: 'API Token', type: 'password', required: true, highlight: true, placeholder: 'r8_...' }]
+  },
+  stabilityAiApi: {
+    label: 'Stability AI',
+    docsUrl: 'https://platform.stability.ai/account/keys',
+    fields: [{ key: 'apiKey', label: 'API Key', type: 'password', required: true, highlight: true, placeholder: 'sk-...' }]
+  },
+  cohereApi: {
+    label: 'Cohere',
+    docsUrl: 'https://dashboard.cohere.com/api-keys',
+    fields: [{ key: 'apiKey', label: 'API Key', type: 'password', required: true, highlight: true }]
+  },
+  togetherAiApi: {
+    label: 'Together AI',
+    docsUrl: 'https://api.together.xyz/settings/api-keys',
+    fields: [{ key: 'apiKey', label: 'API Key', type: 'password', required: true, highlight: true }]
+  },
+  perplexityApi: {
+    label: 'Perplexity AI',
+    docsUrl: 'https://www.perplexity.ai/settings/api',
+    fields: [{ key: 'apiKey', label: 'API Key', type: 'password', required: true, highlight: true, placeholder: 'pplx-...' }]
+  },
+  openRouterApi: {
+    label: 'OpenRouter',
+    docsUrl: 'https://openrouter.ai/keys',
+    fields: [{ key: 'apiKey', label: 'API Key', type: 'password', required: true, highlight: true, placeholder: 'sk-or-v1-...' }]
+  },
+
+  // ── Vector DBs & data ──────────────────────────────────────
+  pineconeApi: {
+    label: 'Pinecone',
+    docsUrl: 'https://app.pinecone.io/',
+    fields: [
+      { key: 'apiKey',       label: 'API Key',     type: 'password', required: true, highlight: true },
+      { key: 'environment',  label: 'Environment', type: 'text',     required: false, placeholder: 'us-east1-gcp' },
+    ]
+  },
+  supabaseApi: {
+    label: 'Supabase',
+    docsUrl: 'https://app.supabase.com/project/_/settings/api',
+    fields: [
+      { key: 'host',        label: 'Project URL',  type: 'url',      required: true,  placeholder: 'https://xxx.supabase.co' },
+      { key: 'serviceRole', label: 'Service Role Key', type: 'password', required: true, highlight: true },
+    ]
+  },
+
+  // ── Productivity ───────────────────────────────────────────
+  notionApi: {
+    label: 'Notion',
+    docsUrl: 'https://www.notion.so/my-integrations',
+    fields: [{ key: 'apiKey', label: 'Internal Integration Token', type: 'password', required: true, highlight: true, placeholder: 'secret_...' }]
+  },
+  airtableApi: {
+    label: 'Airtable',
+    docsUrl: 'https://airtable.com/create/tokens',
+    fields: [{ key: 'apiKey', label: 'Personal Access Token', type: 'password', required: true, highlight: true, placeholder: 'pat...' }]
+  },
+  linearApi: {
+    label: 'Linear',
+    docsUrl: 'https://linear.app/settings/api',
+    fields: [{ key: 'apiKey', label: 'API Key', type: 'password', required: true, highlight: true }]
+  },
+  discordApi: {
+    label: 'Discord Bot',
+    docsUrl: 'https://discord.com/developers/applications',
+    fields: [{ key: 'botToken', label: 'Bot Token', type: 'password', required: true, highlight: true }]
+  },
+  sendGridApi: {
+    label: 'SendGrid',
+    docsUrl: 'https://app.sendgrid.com/settings/api_keys',
+    fields: [{ key: 'apiKey', label: 'API Key', type: 'password', required: true, highlight: true, placeholder: 'SG...' }]
+  },
+  resendApi: {
+    label: 'Resend',
+    docsUrl: 'https://resend.com/api-keys',
+    fields: [{ key: 'apiKey', label: 'API Key', type: 'password', required: true, highlight: true, placeholder: 're_...' }]
   },
 };
 
@@ -282,6 +384,38 @@ const DRIVERS = [
     read: readVscodeKey, write: writeVscodeKey,
   },
 
+  // ── Zed ────────────────────────────────────────────────────
+  {
+    id: 'zed', label: 'Zed', icon: '⚡', group: 'Editors',
+    defaultPath: process.platform === 'darwin'
+      ? path.join(HOME, 'Library', 'Application Support', 'Zed', 'settings.json')
+      : process.platform === 'win32'
+        ? path.join(APPDATA, 'Zed', 'settings.json')
+        : path.join(HOME, '.config', 'zed', 'settings.json'),
+    configurable: true,
+    read(p) {
+      try {
+        const lm = JSON.parse(fs.readFileSync(p, 'utf8'))?.language_models || {};
+        return Object.values(lm).find(m => m?.api_key)?.api_key || null;
+      } catch { return null; }
+    },
+    write(p, newKey) {
+      if (!fs.existsSync(p)) return { ok: false, error: 'File not found' };
+      try {
+        const d  = JSON.parse(fs.readFileSync(p, 'utf8'));
+        const lm = d?.language_models;
+        if (!lm) return { ok: true, detail: 'skipped — no language_models in settings' };
+        let n = 0;
+        for (const provider of Object.values(lm)) {
+          if (provider && 'api_key' in provider && provider.api_key) { provider.api_key = newKey; n++; }
+        }
+        if (!n) return { ok: true, detail: 'skipped — no api_key found in language_models' };
+        backupAndWrite(p, JSON.stringify(d, null, 2));
+        return { ok: true, detail: `${n} provider(s) updated` };
+      } catch (e) { return { ok: false, error: e.message }; }
+    },
+  },
+
   // ── Continue.dev ───────────────────────────────────────────
   {
     id: 'continuedev', label: 'Continue.dev', icon: '▶️', group: 'AI Tools',
@@ -367,6 +501,13 @@ const DEFAULTS = {
   openRouterLastKeyHash: '',
   paths:         Object.fromEntries(DRIVERS.map(d => [d.id, d.defaultPath])),
   driverEnabled: {},   // empty = all drivers enabled (auto-detect)
+  schedule: {
+    enabled:     false,
+    intervalDays: 7,
+    nextRunAt:   null,   // ISO string or null
+    keyName:     'key-manager-auto',
+    deleteOld:   false,
+  },
 };
 
 // ─── Config helpers ────────────────────────────────────────────
@@ -377,6 +518,7 @@ function loadCfg() {
     const user = JSON.parse(fs.readFileSync(CFG_PATH, 'utf8'));
     if (user.paths         && typeof user.paths         === 'object') { Object.assign(base.paths,         user.paths);         delete user.paths;         }
     if (user.driverEnabled && typeof user.driverEnabled === 'object') { Object.assign(base.driverEnabled, user.driverEnabled); delete user.driverEnabled; }
+    if (user.schedule      && typeof user.schedule      === 'object') { Object.assign(base.schedule,      user.schedule);      delete user.schedule;      }
     return Object.assign(base, user);
   } catch { return JSON.parse(JSON.stringify(DEFAULTS)); }
 }
@@ -507,6 +649,69 @@ function n8nErrMsg(body) {
   return typeof body === 'object' ? (body?.message || JSON.stringify(body)) : String(body);
 }
 
+// ─── Scheduled auto-rotation ──────────────────────────────────
+async function runScheduledRotation() {
+  const cfg = loadCfg();
+  if (!cfg.openRouterMgmtKey) return;
+
+  console.log(`[scheduler] Running scheduled rotation…`);
+  try {
+    const label    = cfg.schedule.keyName || `key-manager-auto-${new Date().toISOString().slice(0,10)}`;
+    const createR  = await orReq('POST', '/api/v1/keys', cfg.openRouterMgmtKey, { name: label });
+    if (createR.status !== 200 && createR.status !== 201) {
+      console.error(`[scheduler] Failed to create key: HTTP ${createR.status}`);
+      return;
+    }
+    const newKey  = createR.body.key;
+    const newHash = createR.body.hash || createR.body.data?.hash || '';
+    if (!newKey) return;
+
+    const results = rotateDrivers(cfg, newKey);
+
+    if (cfg.n8nApiKey && cfg.n8nCredentials.length > 0) {
+      for (const cred of cfg.n8nCredentials) {
+        try {
+          const meta    = await n8nReq(cfg, 'GET', `/api/v1/credentials/${cred.id}?includeData=true`, null);
+          const existing = (meta.status === 200 && meta.body?.data) ? meta.body.data : {};
+          const rawData  = { ...existing, apiKey: newKey };
+          if (cred.baseUrl) rawData.url = cred.baseUrl;
+          const credName = (meta.status === 200 && meta.body?.name) ? meta.body.name : cred.name;
+          const r = await n8nReq(cfg, 'PATCH', `/api/v1/credentials/${cred.id}`, { name: credName, data: rawData });
+          results.push({ label: `n8n › ${cred.name}`, ok: r.status < 300, error: r.status >= 300 ? n8nErrMsg(r.body) : null, detail: r.status < 300 ? 'updated' : null });
+        } catch (e) { results.push({ label: `n8n › ${cred.name}`, ok: false, error: e.message }); }
+      }
+    }
+
+    if (cfg.schedule.deleteOld && cfg.openRouterLastKeyHash) {
+      await orReq('DELETE', `/api/v1/keys/${cfg.openRouterLastKeyHash}`, cfg.openRouterMgmtKey, null).catch(() => {});
+    }
+
+    cfg.openRouterLastKeyHash = newHash;
+    // Schedule next run
+    const next = new Date(Date.now() + cfg.schedule.intervalDays * 24 * 60 * 60 * 1000);
+    cfg.schedule.nextRunAt = next.toISOString();
+    saveCfg(cfg);
+
+    const ok = results.every(r => r.ok);
+    appendHistory({ source: 'scheduled', keyPreview: mask(newKey), ok, results });
+    console.log(`[scheduler] Done — ${ok ? 'all OK' : 'some failed'}. Next run: ${cfg.schedule.nextRunAt}`);
+  } catch (e) {
+    console.error(`[scheduler] Error:`, e.message);
+  }
+}
+
+function checkSchedule() {
+  const cfg = loadCfg();
+  if (!cfg.schedule.enabled || !cfg.schedule.nextRunAt) return;
+  if (new Date() >= new Date(cfg.schedule.nextRunAt)) {
+    runScheduledRotation();
+  }
+}
+
+// Check on startup + every hour
+setTimeout(checkSchedule, 5000);
+setInterval(checkSchedule, 60 * 60 * 1000);
+
 // ─── HTTP server ───────────────────────────────────────────────
 const srv = http.createServer(async (req, res) => {
   const { method, url } = req;
@@ -636,9 +841,50 @@ const srv = http.createServer(async (req, res) => {
       if (body.paths !== undefined && typeof body.paths === 'object')           Object.assign(cfg.paths, body.paths);
       if (body.driverEnabled !== undefined && typeof body.driverEnabled === 'object') Object.assign(cfg.driverEnabled, body.driverEnabled);
       if (body.openRouterMgmtKey !== undefined && notMasked(body.openRouterMgmtKey)) cfg.openRouterMgmtKey = body.openRouterMgmtKey;
+      if (body.schedule && typeof body.schedule === 'object') {
+        const s = cfg.schedule;
+        const prev = s.enabled;
+        Object.assign(s, body.schedule);
+        // Recalculate nextRunAt when enabling or interval changed
+        if (s.enabled && (!s.nextRunAt || !prev || body.schedule.intervalDays !== undefined)) {
+          s.nextRunAt = new Date(Date.now() + s.intervalDays * 24 * 60 * 60 * 1000).toISOString();
+        }
+        if (!s.enabled) s.nextRunAt = null;
+      }
       saveCfg(cfg);
       json(res, { ok: true });
     } catch (e) { json(res, { ok: false, error: e.message }, 400); }
+    return;
+  }
+
+  // ── POST /api/schedule ────────────────────────────────────
+  if (method === 'POST' && url === '/api/schedule') {
+    try {
+      const body = JSON.parse(await readBody(req));
+      const cfg  = loadCfg();
+      const s    = cfg.schedule;
+      if (body.enabled      !== undefined) s.enabled      = Boolean(body.enabled);
+      if (body.intervalDays !== undefined) s.intervalDays = Math.max(1, Number(body.intervalDays) || 7);
+      if (body.keyName      !== undefined) s.keyName      = body.keyName;
+      if (body.deleteOld    !== undefined) s.deleteOld    = Boolean(body.deleteOld);
+      // Recalculate nextRunAt when enabling or changing interval
+      if (s.enabled && (!s.nextRunAt || body.intervalDays !== undefined || body.enabled === true)) {
+        s.nextRunAt = new Date(Date.now() + s.intervalDays * 24 * 60 * 60 * 1000).toISOString();
+      }
+      if (!s.enabled) s.nextRunAt = null;
+      saveCfg(cfg);
+      json(res, { ok: true, schedule: s });
+    } catch (e) { json(res, { ok: false, error: e.message }, 400); }
+    return;
+  }
+
+  // ── POST /api/schedule/run-now ─────────────────────────────
+  if (method === 'POST' && url === '/api/schedule/run-now') {
+    const cfg = loadCfg();
+    if (!cfg.openRouterMgmtKey)
+      return json(res, { ok: false, error: 'OpenRouter Management API key not configured' });
+    json(res, { ok: true, message: 'Rotation triggered — check history in a moment' });
+    runScheduledRotation();   // fire-and-forget
     return;
   }
 

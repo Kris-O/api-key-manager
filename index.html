@@ -211,7 +211,7 @@ textarea { resize: vertical; min-height: 90px; font-family: monospace; font-size
 <div class="app">
 
   <header>
-    <div class="logo">🔑 Key Manager <span class="version">v2.3</span></div>
+    <div class="logo">🔑 Key Manager <span class="version">v2.4</span></div>
     <div style="color:var(--muted);font-size:0.8rem;">localhost only · zero deps</div>
   </header>
 
@@ -346,6 +346,36 @@ textarea { resize: vertical; min-height: 90px; font-family: monospace; font-size
           <input type="password" id="s-orMgmtKey" placeholder="sk-or-mgmt-…" autocomplete="off">
           <button class="eye-btn" onclick="togglePwd('s-orMgmtKey')">👁</button>
         </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Scheduled auto-rotation
+        <span style="font-size:0.7rem;font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0;margin-left:6px;">— requires OpenRouter Management API key</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.88rem;">
+          <input type="checkbox" id="s-schedEnabled" style="width:15px;height:15px;accent-color:var(--accent);">
+          Enable scheduled rotation
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:0.88rem;color:var(--muted);">
+          Every
+          <input type="number" id="s-schedDays" min="1" max="365" value="7"
+                 style="width:60px;text-align:center;padding:5px 8px;">
+          days
+        </label>
+        <label style="display:flex;align-items:center;gap-6px;cursor:pointer;font-size:0.85rem;color:var(--muted);">
+          <input type="checkbox" id="s-schedDeleteOld" style="width:14px;height:14px;accent-color:var(--accent);margin-right:4px;">
+          Delete old key
+        </label>
+      </div>
+      <div class="settings-group">
+        <label>Key name <span style="font-size:0.75rem;font-weight:400;">(label for generated OpenRouter key)</span></label>
+        <input type="text" id="s-schedKeyName" placeholder="key-manager-auto" style="max-width:300px;">
+      </div>
+      <div id="schedStatus" style="margin-top:8px;font-size:0.82rem;color:var(--muted);"></div>
+      <div class="btn-row" style="margin-top:10px;">
+        <button class="btn sm" onclick="schedRunNow()" id="schedRunBtn">⚡ Run now</button>
       </div>
     </div>
 
@@ -569,6 +599,21 @@ async function clearHistory() {
   toast('History cleared', 'ok');
 }
 
+/* ── Scheduler ───────────────────────────────────────────────── */
+async function schedRunNow() {
+  const btn = document.getElementById('schedRunBtn');
+  btn.disabled = true; btn.textContent = 'Running…';
+  const res = await fetch('/api/schedule/run-now', { method: 'POST' })
+    .then(r => r.json()).catch(e => ({ ok: false, error: e.message }));
+  if (res.ok) {
+    toast('⚡ Scheduled rotation triggered — check history', 'ok');
+    setTimeout(() => { loadHistory(); loadStatus(); }, 3000);
+  } else {
+    toast('✗ ' + res.error, 'error');
+  }
+  btn.disabled = false; btn.textContent = '⚡ Run now';
+}
+
 /* ── Credentials pane ───────────────────────────────────────── */
 async function loadCredentials() {
   document.getElementById('credList').innerHTML    = '<div class="loading">Loading…</div>';
@@ -753,6 +798,23 @@ async function loadSettings() {
     document.getElementById('s-orMgmtKey').value = cfg.openRouterMgmtKey || '';
     const orCard = document.getElementById('orCard');
     if (orCard) orCard.style.display = cfg.openRouterMgmtKey ? 'block' : 'none';
+
+    // Schedule
+    const sc = cfg.schedule || {};
+    document.getElementById('s-schedEnabled').checked   = !!sc.enabled;
+    document.getElementById('s-schedDays').value        = sc.intervalDays || 7;
+    document.getElementById('s-schedDeleteOld').checked = !!sc.deleteOld;
+    document.getElementById('s-schedKeyName').value     = sc.keyName || '';
+    const schedSt = document.getElementById('schedStatus');
+    if (sc.enabled && sc.nextRunAt) {
+      const next = new Date(sc.nextRunAt);
+      schedSt.innerHTML = `⏰ Next run: <strong>${next.toLocaleString()}</strong>`;
+      schedSt.style.color = 'var(--ok)';
+    } else {
+      schedSt.textContent = sc.enabled ? 'Enabled — save settings to set next run' : 'Disabled';
+      schedSt.style.color = 'var(--muted)';
+    }
+
     renderDriverSettings(drivers);
     renderRotTargets(cfg.n8nCredentials || []);
   } catch(e) { console.error(e); }
@@ -908,7 +970,13 @@ async function saveSettings() {
   });
 
   const orMgmtKey = (document.getElementById('s-orMgmtKey').value || '').trim();
-  const body = { n8nBaseUrl: baseUrl || 'http://localhost:5678', n8nCredentials, paths, driverEnabled };
+  const schedule = {
+    enabled:      document.getElementById('s-schedEnabled').checked,
+    intervalDays: parseInt(document.getElementById('s-schedDays').value, 10) || 7,
+    deleteOld:    document.getElementById('s-schedDeleteOld').checked,
+    keyName:      (document.getElementById('s-schedKeyName').value || '').trim() || 'key-manager-auto',
+  };
+  const body = { n8nBaseUrl: baseUrl || 'http://localhost:5678', n8nCredentials, paths, driverEnabled, schedule };
   if (apiKey    && !apiKey.endsWith('...'))    body.n8nApiKey          = apiKey;
   if (orMgmtKey && !orMgmtKey.endsWith('...')) body.openRouterMgmtKey = orMgmtKey;
 
