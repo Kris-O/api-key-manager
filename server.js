@@ -6,7 +6,7 @@ const path    = require('path');
 const os      = require('os');
 const { execSync } = require('child_process');
 
-const VERSION  = '2.4.0';
+const VERSION  = '2.5.0';
 const PORT     = Number(process.env.KM_PORT) || 7432;
 const DIR      = __dirname;
 const CFG_PATH     = path.join(DIR, 'app-config.json');
@@ -632,6 +632,43 @@ function n8nReq(cfg, method, endpoint, body) {
   });
 }
 
+// ─── Key validation helper ─────────────────────────────────────
+function pingKey(key, targetUrl) {
+  return new Promise(resolve => {
+    try {
+      const base       = new URL((targetUrl || 'http://localhost:1234/v1').replace(/\/+$/, ''));
+      const mod        = base.protocol === 'https:' ? https : http;
+      const modelsPath = base.pathname.replace(/\/+$/, '') + '/models';
+      const opts = {
+        hostname: base.hostname,
+        port:     base.port || (base.protocol === 'https:' ? 443 : 80),
+        path: modelsPath, method: 'GET',
+        headers: { 'Authorization': `Bearer ${key}`, 'Accept': 'application/json' },
+      };
+      const r = mod.request(opts, resp => {
+        let data = '';
+        resp.on('data', c => data += c);
+        resp.on('end', () => {
+          if (resp.statusCode === 200) {
+            try {
+              const body  = JSON.parse(data);
+              const count = (body.data || body.models || []).length;
+              resolve({ ok: true,  status: 200, message: `${count} model(s) available` });
+            } catch { resolve({ ok: true,  status: 200, message: 'Endpoint OK' }); }
+          } else if (resp.statusCode === 401) {
+            resolve({ ok: false, status: 401, message: 'Invalid key (401 Unauthorized)' });
+          } else {
+            resolve({ ok: false, status: resp.statusCode, message: `HTTP ${resp.statusCode}` });
+          }
+        });
+      });
+      r.setTimeout(5000, () => { r.destroy(); resolve({ ok: false, message: 'Timeout (5 s)' }); });
+      r.on('error', e => resolve({ ok: false, message: e.message }));
+      r.end();
+    } catch(e) { resolve({ ok: false, message: e.message }); }
+  });
+}
+
 // ─── HTTP helpers ──────────────────────────────────────────────
 function readBody(req) {
   return new Promise((ok, fail) => {
@@ -774,47 +811,55 @@ const srv = http.createServer(async (req, res) => {
     return;
   }
 
+  // ── GET /api/health ───────────────────────────────────────
+  // Per-driver health check: reads each key, validates unique keys in parallel
+  // Status values: valid | invalid | not_set | not_installed | disabled
+  if (method === 'GET' && url.split('?')[0] === '/api/health') {
+    try {
+      const qs        = url.includes('?') ? url.slice(url.indexOf('?') + 1) : '';
+      const targetUrl = new URLSearchParams(qs).get('url') || 'http://localhost:1234/v1';
+      const cfg       = loadCfg();
+
+      // Pass 1: read keys from all drivers
+      const driverInfo = DRIVERS.map(d => {
+        const p       = driverPath(d, cfg);
+        const enabled = isEnabled(d, cfg);
+        const exists  = Boolean(p) && fs.existsSync(p);
+        const key     = (enabled && exists) ? d.read(p) : null;
+        return { d, enabled, exists, key, keyPreview: mask(key) };
+      });
+
+      // Pass 2: validate each unique key once (parallel)
+      const uniqueKeys = [...new Set(driverInfo.map(x => x.key).filter(Boolean))];
+      const pings      = await Promise.all(uniqueKeys.map(k => pingKey(k, targetUrl)));
+      const keyMap     = new Map(uniqueKeys.map((k, i) => [k, pings[i]]));
+
+      // Pass 3: build result
+      const drivers = driverInfo.map(({ d, enabled, exists, key, keyPreview }) => {
+        let status, message = null;
+        if      (!enabled) { status = 'disabled'; }
+        else if (!exists)  { status = 'not_installed'; }
+        else if (!key)     { status = 'not_set'; }
+        else {
+          const v = keyMap.get(key);
+          status  = v?.ok ? 'valid' : 'invalid';
+          message = v?.message || null;
+        }
+        return { id: d.id, label: d.label, icon: d.icon, group: d.group,
+                 status, keyPreview, message };
+      });
+
+      json(res, { url: targetUrl, checkedAt: new Date().toISOString(), drivers });
+    } catch(e) { json(res, { ok: false, error: e.message }, 500); }
+    return;
+  }
+
   // ── POST /api/validate-key ────────────────────────────────
   if (method === 'POST' && url === '/api/validate-key') {
     try {
       const { key, url: targetUrl } = JSON.parse(await readBody(req));
       if (!key) return json(res, { ok: false, message: 'No key provided' }, 400);
-
-      const base    = new URL((targetUrl || 'http://localhost:1234/v1').replace(/\/+$/, ''));
-      const mod     = base.protocol === 'https:' ? https : http;
-      const modelsPath = base.pathname.replace(/\/+$/, '') + '/models';
-
-      const result = await new Promise(resolve => {
-        const opts = {
-          hostname: base.hostname,
-          port:     base.port || (base.protocol === 'https:' ? 443 : 80),
-          path:     modelsPath,
-          method:   'GET',
-          headers:  { 'Authorization': `Bearer ${key}`, 'Accept': 'application/json' },
-        };
-        const r = mod.request(opts, resp => {
-          let data = '';
-          resp.on('data', c => data += c);
-          resp.on('end', () => {
-            if (resp.statusCode === 200) {
-              try {
-                const body = JSON.parse(data);
-                const count = (body.data || body.models || []).length;
-                resolve({ ok: true, status: 200, message: `${count} model(s) available` });
-              } catch { resolve({ ok: true, status: 200, message: 'Endpoint OK' }); }
-            } else if (resp.statusCode === 401) {
-              resolve({ ok: false, status: 401, message: 'Invalid key (401 Unauthorized)' });
-            } else {
-              resolve({ ok: false, status: resp.statusCode, message: `HTTP ${resp.statusCode}` });
-            }
-          });
-        });
-        r.setTimeout(5000, () => { r.destroy(); resolve({ ok: false, message: 'Timeout (5 s)' }); });
-        r.on('error', e => resolve({ ok: false, message: e.message }));
-        r.end();
-      });
-
-      json(res, result);
+      json(res, await pingKey(key, targetUrl));
     } catch(e) { json(res, { ok: false, message: e.message }, 500); }
     return;
   }

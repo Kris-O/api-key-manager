@@ -200,6 +200,12 @@ textarea { resize: vertical; min-height: 90px; font-family: monospace; font-size
 .hist-results { font-size: 0.76rem; display: flex; flex-wrap: wrap; gap: 6px; }
 .hist-r { padding: 1px 0; }
 
+/* ── Health badges ───────────────────────────────────────────── */
+.health-badge { font-size: 0.72rem; padding: 2px 8px; border-radius: 99px; white-space: nowrap; font-weight: 600; flex-shrink: 0; }
+.health-badge.valid   { background: rgba(34,197,94,.12);   color: var(--ok);   }
+.health-badge.invalid { background: rgba(239,68,68,.12);   color: var(--err);  }
+.health-badge.not-set { background: rgba(148,163,184,.08); color: var(--muted); }
+
 /* ── Toast ───────────────────────────────────────────────────── */
 #toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 0.88rem; padding: 10px 22px; box-shadow: 0 4px 24px #0009; opacity: 0; transition: opacity .25s, transform .25s; pointer-events: none; white-space: nowrap; max-width: calc(100vw - 32px); z-index: 9999; }
 #toast.show  { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -211,7 +217,7 @@ textarea { resize: vertical; min-height: 90px; font-family: monospace; font-size
 <div class="app">
 
   <header>
-    <div class="logo">🔑 Key Manager <span class="version">v2.4</span></div>
+    <div class="logo">🔑 Key Manager <span class="version">v2.5</span></div>
     <div style="color:var(--muted);font-size:0.8rem;">localhost only · zero deps</div>
   </header>
 
@@ -227,7 +233,11 @@ textarea { resize: vertical; min-height: 90px; font-family: monospace; font-size
   <div id="pane-rotate" class="pane active">
 
     <div class="card">
-      <div class="section-title">Sources status</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <span class="section-title" style="margin-bottom:0;">Sources status</span>
+        <button class="btn sm" id="healthBtn" onclick="checkHealth()"
+                title="Validate each stored key against the Test URL (set below)">🩺 Check health</button>
+      </div>
       <div id="sources">
         <div class="source-row"><div class="dot warn"></div><div class="source-label">Loading…</div></div>
       </div>
@@ -489,7 +499,7 @@ async function loadStatus() {
           warn    = s.exists && !s.preview;
         }
         const dot = hasData ? 'ok' : (warn ? 'warn' : '');
-        return `<div class="source-row">
+        return `<div class="source-row" data-driver-id="${esc(s.id)}">
           <div class="dot ${dot}"></div>
           <div class="source-icon">${esc(s.icon || '')}</div>
           <div class="source-label">${esc(s.label)}</div>
@@ -565,6 +575,46 @@ async function validateKey() {
     toast('✗ ' + (res.message || 'Invalid key'), 'error');
   }
   btn.disabled = false; btn.textContent = '✓ Test key';
+}
+
+/* ── Key health dashboard ────────────────────────────────────── */
+async function checkHealth() {
+  const url = (document.getElementById('validateUrl').value || 'http://localhost:1234/v1').trim();
+  const btn = document.getElementById('healthBtn');
+  btn.disabled = true; btn.textContent = '🩺 Checking…';
+
+  // Remove stale badges from a previous check
+  document.querySelectorAll('.health-badge').forEach(b => b.remove());
+
+  try {
+    const data = await fetch('/api/health?url=' + encodeURIComponent(url)).then(r => r.json());
+    if (!data.drivers) throw new Error(data.error || 'Unexpected response');
+
+    // Build a lookup of visible rows by driver id
+    const rowMap = {};
+    document.querySelectorAll('[data-driver-id]').forEach(r => { rowMap[r.dataset.driverId] = r; });
+
+    let valid = 0, invalid = 0, notSet = 0;
+    for (const d of data.drivers) {
+      const row = rowMap[d.id];
+      if (!row) continue;   // driver not shown in status panel (not installed / disabled)
+      let badge = '';
+      if      (d.status === 'valid')   { badge = `<span class="health-badge valid">✓ valid</span>`;                                 valid++;  }
+      else if (d.status === 'invalid') { badge = `<span class="health-badge invalid">✗ ${esc(d.message || 'invalid')}</span>`;      invalid++; }
+      else if (d.status === 'not_set') { badge = `<span class="health-badge not-set">⚫ no key</span>`;                             notSet++; }
+      if (badge) row.insertAdjacentHTML('beforeend', badge);
+    }
+
+    const parts = [
+      valid   ? `${valid} valid`    : '',
+      invalid ? `${invalid} invalid` : '',
+      notSet  ? `${notSet} no key`   : '',
+    ].filter(Boolean);
+    toast('🩺 ' + (parts.join(' · ') || 'No keys to check'), invalid ? 'error' : 'ok');
+  } catch(e) {
+    toast('Health check failed: ' + e.message, 'error');
+  }
+  btn.disabled = false; btn.textContent = '🩺 Check health';
 }
 
 /* ── Rotation history ────────────────────────────────────────── */
