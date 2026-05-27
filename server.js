@@ -427,9 +427,15 @@ function rotateDrivers(cfg, newKey) {
     const p      = driverPath(d, cfg);
     const exists = Boolean(p) && fs.existsSync(p);
     if (!exists) {
-      // Show error only for user-configured non-default paths or dotenv (must be explicit)
-      if (d.id === 'dotenv' || (p && p !== d.defaultPath)) {
-        results.push({ label: d.label, ok: false, error: p ? 'File not found' : 'Path not configured' });
+      // dotenv: show error only when a path was set but the file is missing
+      // (empty path = user hasn't configured it → silent skip, same as uninstalled tools)
+      if (d.id === 'dotenv') {
+        if (p) results.push({ label: d.label, ok: false, error: 'File not found' });
+        continue;
+      }
+      // Other drivers: show error only for explicit non-default paths that don't exist
+      if (p && p !== d.defaultPath) {
+        results.push({ label: d.label, ok: false, error: 'File not found' });
       }
       continue;
     }
@@ -713,11 +719,13 @@ const srv = http.createServer(async (req, res) => {
         for (const cred of cfg.n8nCredentials) {
           try {
             const meta     = await n8nReq(cfg, 'GET', `/api/v1/credentials/${cred.id}?includeData=true`, null);
-            const credType = meta.status === 200 ? (meta.body?.type || 'openAiApi') : 'openAiApi';
             const existing = (meta.status === 200 && meta.body?.data) ? meta.body.data : {};
-            const rawData  = { ...buildCredData(credType, existing), apiKey: newKey };
+            // Only overlay apiKey (and baseUrl if set) — preserve all other fields as-is
+            // This avoids schema-validation errors from n8n when fields differ across versions
+            const rawData  = { ...existing, apiKey: newKey };
             if (cred.baseUrl) rawData.url = cred.baseUrl;
-            const r = await n8nReq(cfg, 'PATCH', `/api/v1/credentials/${cred.id}`, { name: cred.name, data: rawData });
+            const credName = (meta.status === 200 && meta.body?.name) ? meta.body.name : cred.name;
+            const r = await n8nReq(cfg, 'PATCH', `/api/v1/credentials/${cred.id}`, { name: credName, data: rawData });
             results.push({
               label:  `n8n › ${cred.name}`,
               ok:     r.status < 300,
@@ -778,11 +786,11 @@ const srv = http.createServer(async (req, res) => {
         for (const cred of cfg.n8nCredentials) {
           try {
             const meta     = await n8nReq(cfg, 'GET', `/api/v1/credentials/${cred.id}?includeData=true`, null);
-            const credType = meta.status === 200 ? (meta.body?.type || 'openAiApi') : 'openAiApi';
             const existing = (meta.status === 200 && meta.body?.data) ? meta.body.data : {};
-            const rawData  = { ...buildCredData(credType, existing), apiKey: newKey };
+            const rawData  = { ...existing, apiKey: newKey };
             if (cred.baseUrl) rawData.url = cred.baseUrl;
-            const r = await n8nReq(cfg, 'PATCH', `/api/v1/credentials/${cred.id}`, { name: cred.name, data: rawData });
+            const credName = (meta.status === 200 && meta.body?.name) ? meta.body.name : cred.name;
+            const r = await n8nReq(cfg, 'PATCH', `/api/v1/credentials/${cred.id}`, { name: credName, data: rawData });
             results.push({ label: `n8n › ${cred.name}`, ok: r.status < 300, error: r.status >= 300 ? n8nErrMsg(r.body) : null, detail: r.status < 300 ? 'updated' : null });
           } catch (e) { results.push({ label: `n8n › ${cred.name}`, ok: false, error: e.message }); }
         }
