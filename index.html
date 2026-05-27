@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -33,6 +33,12 @@ a:hover { text-decoration: underline; }
 header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
 .logo { font-size: 1.3rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
 .version { font-size: 0.7rem; color: var(--muted); background: var(--surface2); padding: 2px 7px; border-radius: 99px; }
+
+/* ── Language toggle ─────────────────────────────────────────── */
+.lang-toggle { display: flex; border: 1px solid var(--border); border-radius: 99px; overflow: hidden; }
+.lang-btn { background: none; border: none; color: var(--muted); cursor: pointer; font: inherit; font-size: 0.78rem; font-weight: 600; padding: 3px 10px; transition: background .15s, color .15s; }
+.lang-btn:hover { color: var(--text); }
+.lang-btn.active { background: var(--accent); color: #fff; }
 
 /* ── Tabs ────────────────────────────────────────────────────── */
 .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
@@ -218,13 +224,19 @@ textarea { resize: vertical; min-height: 90px; font-family: monospace; font-size
 
   <header>
     <div class="logo">🔑 Key Manager <span class="version">v2.5</span></div>
-    <div style="color:var(--muted);font-size:0.8rem;">localhost only · zero deps</div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span data-i18n="localOnly" style="color:var(--muted);font-size:0.8rem;">localhost only · zero deps</span>
+      <div class="lang-toggle">
+        <button class="lang-btn" id="lang-en" onclick="switchLang('en')">EN</button>
+        <button class="lang-btn" id="lang-pl" onclick="switchLang('pl')">PL</button>
+      </div>
+    </div>
   </header>
 
   <div class="tabs">
-    <button class="tab-btn active" data-tab="rotate"      onclick="switchTab('rotate')">Rotacja kluczy</button>
-    <button class="tab-btn"        data-tab="credentials" onclick="switchTab('credentials')">n8n Credentials</button>
-    <button class="tab-btn"        data-tab="settings"    onclick="switchTab('settings')">⚙ Ustawienia</button>
+    <button class="tab-btn active" data-tab="rotate"      data-i18n="tabRotate"      onclick="switchTab('rotate')">Rotacja kluczy</button>
+    <button class="tab-btn"        data-tab="credentials" data-i18n="tabCredentials" onclick="switchTab('credentials')">n8n Credentials</button>
+    <button class="tab-btn"        data-tab="settings"    data-i18n="tabSettings"    onclick="switchTab('settings')">⚙ Ustawienia</button>
   </div>
 
   <!-- ══════════════════════════════════════════════════════════
@@ -234,31 +246,30 @@ textarea { resize: vertical; min-height: 90px; font-family: monospace; font-size
 
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-        <span class="section-title" style="margin-bottom:0;">Status narzędzi</span>
-        <button class="btn sm" id="healthBtn" onclick="checkHealth()"
-                title="Sprawdza czy klucz zapisany w każdym narzędziu działa (ping /v1/models)">🩺 Sprawdź klucze</button>
+        <span class="section-title" style="margin-bottom:0;" data-i18n="toolStatus">Status narzędzi</span>
+        <button class="btn sm" id="healthBtn" onclick="checkHealth()" data-i18n="checkKeys">🩺 Sprawdź klucze</button>
       </div>
       <div id="sources">
-        <div class="source-row"><div class="dot warn"></div><div class="source-label">Loading…</div></div>
+        <div class="source-row"><div class="dot warn"></div><div class="source-label" data-i18n="loading">Ładowanie…</div></div>
       </div>
     </div>
 
     <div class="card">
-      <div class="section-title">Wklej nowy klucz API</div>
+      <div class="section-title" data-i18n="pasteKeyTitle">Wklej nowy klucz API</div>
       <div class="key-row">
         <div class="input-wrap">
-          <input type="password" id="newKey" placeholder="Wklej nowy klucz…" autocomplete="off" spellcheck="false">
-          <button class="eye-btn" onclick="togglePwd('newKey')" title="Pokaż / ukryj">👁</button>
+          <input type="password" id="newKey" data-i18n-placeholder="pasteKeyPlaceholder" placeholder="Wklej nowy klucz…" autocomplete="off" spellcheck="false">
+          <button class="eye-btn" onclick="togglePwd('newKey')" title="Show / hide">👁</button>
         </div>
-        <button class="btn" onclick="pasteKey()" title="Wklej ze schowka">📋</button>
+        <button class="btn" onclick="pasteKey()" title="Paste from clipboard">📋</button>
       </div>
       <div class="btn-row">
-        <button class="btn primary" id="rotateBtn" onclick="rotate()">Zastosuj we wszystkich narzędziach</button>
-        <button class="btn" id="validateBtn" onclick="validateKey()" title="Pinguje /v1/models — sprawdza czy klucz działa">✓ Przetestuj klucz</button>
+        <button class="btn primary" id="rotateBtn" onclick="rotate()" data-i18n="applyAll">Zastosuj we wszystkich narzędziach</button>
+        <button class="btn" id="validateBtn" onclick="validateKey()" data-i18n="testKey">✓ Przetestuj klucz</button>
         <span id="rotStatus" style="font-size:0.82rem;color:var(--muted);"></span>
       </div>
       <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
-        <span style="font-size:0.75rem;color:var(--muted);white-space:nowrap;">Adres serwera:</span>
+        <span style="font-size:0.75rem;color:var(--muted);white-space:nowrap;" data-i18n="serverAddr">Adres serwera:</span>
         <input type="url" id="validateUrl" value="http://localhost:1234/v1"
                style="max-width:260px;font-size:0.8rem;font-family:monospace;"
                placeholder="http://localhost:1234/v1">
@@ -270,26 +281,26 @@ textarea { resize: vertical; min-height: 90px; font-family: monospace; font-size
     <!-- History -->
     <div id="historyWrap" style="display:none;margin-top:4px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-        <span style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);">Rotation history</span>
-        <button class="btn sm" onclick="clearHistory()" style="font-size:0.72rem;">Clear</button>
+        <span style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);" data-i18n="rotHistory">Historia rotacji</span>
+        <button class="btn sm" onclick="clearHistory()" style="font-size:0.72rem;" data-i18n="clear">Wyczyść</button>
       </div>
       <div id="historyList"></div>
     </div>
 
     <!-- OpenRouter auto-rotate card -->
     <div class="card" id="orCard" style="display:none;">
-      <div class="section-title">⚡ Auto-rotate — OpenRouter</div>
-      <p class="info-box" style="margin-bottom:12px;">
+      <div class="section-title" data-i18n="orAutoRotateTitle">⚡ Auto-rotate — OpenRouter</div>
+      <p class="info-box" style="margin-bottom:12px;" data-i18n-html="orInfoBoxHtml">
         OpenRouter has a <strong>Management API</strong> — Key Manager can generate a new key,
         rotate all sources automatically, and optionally delete the old key.
       </p>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <input type="text" id="orKeyName" placeholder="Key name (optional)" style="flex:1;min-width:150px;" autocomplete="off">
+        <input type="text" id="orKeyName" data-i18n-placeholder="keyNameOptional" placeholder="Key name (optional)" style="flex:1;min-width:150px;" autocomplete="off">
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.85rem;white-space:nowrap;">
           <input type="checkbox" id="orDeleteOld" style="width:14px;height:14px;accent-color:var(--accent);">
-          Delete old key
+          <span data-i18n="deleteOldKeyLabel">Usuń stary klucz</span>
         </label>
-        <button class="btn primary" onclick="orAutoRotate()" id="orRotateBtn">🔄 Generate &amp; rotate</button>
+        <button class="btn primary" onclick="orAutoRotate()" id="orRotateBtn" data-i18n="generateRotate">🔄 Generuj i rotuj</button>
       </div>
       <div id="orLog" style="margin-top:10px;display:none;"></div>
     </div>
@@ -303,13 +314,13 @@ textarea { resize: vertical; min-height: 90px; font-family: monospace; font-size
 
     <div class="cred-toolbar">
       <div class="search-wrap">
-        <input type="search" id="credSearch" placeholder="Search by name or type…" oninput="filterCreds()">
+        <input type="search" id="credSearch" data-i18n-placeholder="credSearchPlaceholder" placeholder="Szukaj po nazwie lub typie…" oninput="filterCreds()">
       </div>
-      <button class="btn sm" onclick="loadCredentials()">↻ Refresh</button>
+      <button class="btn sm" onclick="loadCredentials()" data-i18n="refresh">↻ Odśwież</button>
     </div>
 
     <div id="typeFilters" class="type-filters"></div>
-    <div id="credList"><div class="empty">Configure n8n API key in Settings, then refresh.</div></div>
+    <div id="credList"><div class="empty" data-i18n="configureN8n">Skonfiguruj klucz API n8n w Ustawieniach, a następnie odśwież.</div></div>
 
   </div>
 
@@ -319,35 +330,44 @@ textarea { resize: vertical; min-height: 90px; font-family: monospace; font-size
   <div id="pane-settings" class="pane">
 
     <div class="card">
-      <div class="section-title">Połączenie z n8n</div>
+      <div class="section-title" data-i18n="n8nConnection">Połączenie z n8n</div>
       <div class="settings-group">
-        <label>API Key <span style="font-size:0.75rem;font-weight:400;">(n8n → Settings → n8n API)</span></label>
+        <label>
+          <span data-i18n="apiKeyLabel">Klucz API</span>
+          <span style="font-size:0.75rem;font-weight:400;" data-i18n="apiKeyHint">&nbsp;(n8n → Settings → n8n API)</span>
+        </label>
         <div class="input-wrap" style="margin-bottom:10px;">
           <input type="password" id="s-apiKey" placeholder="eyJhbGci…" autocomplete="off">
           <button class="eye-btn" onclick="togglePwd('s-apiKey')">👁</button>
         </div>
-        <label>Base URL</label>
+        <label data-i18n="baseUrlLabel">Adres (Base URL)</label>
         <div class="s-row">
           <input type="url" id="s-baseUrl" placeholder="http://localhost:5678">
-          <button class="btn sm" onclick="testN8n()">Test connection</button>
+          <button class="btn sm" onclick="testN8n()" data-i18n="testConnection">Testuj połączenie</button>
         </div>
       </div>
     </div>
 
     <!-- Connected tools (driver registry) -->
     <div class="card">
-      <div class="section-title">Podłączone narzędzia</div>
-      <p class="info-box" style="margin-bottom:14px;">
+      <div class="section-title" data-i18n="connectedTools">Podłączone narzędzia</div>
+      <p class="info-box" style="margin-bottom:14px;" data-i18n="connectedToolsDesc">
         Narzędzia z zielonym znaczkiem są wykryte na tym komputerze i automatycznie otrzymują nowy klucz przy rotacji.
         Odznacz, żeby wykluczyć z rotacji. Dla niestandardowych ścieżek instalacji możesz ręcznie podać lokalizację pliku.
       </p>
-      <div id="driverSettings"><div class="loading">Loading…</div></div>
+      <div id="driverSettings"><div class="loading" data-i18n="loading">Ładowanie…</div></div>
     </div>
 
     <div class="card">
-      <div class="section-title">OpenRouter — automatyczna rotacja <span style="font-size:0.7rem;font-weight:400;color:var(--ok);">⚡ Management API</span></div>
+      <div class="section-title">
+        <span data-i18n="orSettingsTitle">OpenRouter — automatyczna rotacja</span>
+        <span style="font-size:0.7rem;font-weight:400;color:var(--ok);" data-i18n="orSettingsBadge">&nbsp;⚡ Management API</span>
+      </div>
       <div class="settings-group">
-        <label>Management API Key <span style="font-size:0.75rem;font-weight:400;">(openrouter.ai → Keys → Create management key)</span></label>
+        <label>
+          <span data-i18n="mgmtApiKeyLabel">Management API Key</span>
+          <span style="font-size:0.75rem;font-weight:400;" data-i18n="mgmtApiKeyHint">&nbsp;(openrouter.ai → Keys → Create management key)</span>
+        </label>
         <div class="input-wrap">
           <input type="password" id="s-orMgmtKey" placeholder="sk-or-mgmt-…" autocomplete="off">
           <button class="eye-btn" onclick="togglePwd('s-orMgmtKey')">👁</button>
@@ -356,51 +376,55 @@ textarea { resize: vertical; min-height: 90px; font-family: monospace; font-size
     </div>
 
     <div class="card">
-      <div class="section-title">Harmonogram rotacji
-        <span style="font-size:0.7rem;font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0;margin-left:6px;">— wymaga klucza OpenRouter Management API</span>
+      <div class="section-title">
+        <span data-i18n="scheduleTitle">Harmonogram rotacji</span>
+        <span style="font-size:0.7rem;font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0;margin-left:6px;" data-i18n="scheduleRequires">— wymaga klucza OpenRouter Management API</span>
       </div>
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.88rem;">
           <input type="checkbox" id="s-schedEnabled" style="width:15px;height:15px;accent-color:var(--accent);">
-          Enable scheduled rotation
+          <span data-i18n="enableSchedule">Włącz automatyczną rotację</span>
         </label>
         <label style="display:flex;align-items:center;gap:6px;font-size:0.88rem;color:var(--muted);">
-          Every
+          <span data-i18n="every">Co</span>
           <input type="number" id="s-schedDays" min="1" max="365" value="7"
                  style="width:60px;text-align:center;padding:5px 8px;">
-          days
+          <span data-i18n="days">dni</span>
         </label>
-        <label style="display:flex;align-items:center;gap-6px;cursor:pointer;font-size:0.85rem;color:var(--muted);">
+        <label style="display:flex;align-items:center;cursor:pointer;font-size:0.85rem;color:var(--muted);">
           <input type="checkbox" id="s-schedDeleteOld" style="width:14px;height:14px;accent-color:var(--accent);margin-right:4px;">
-          Delete old key
+          <span data-i18n="deleteOldKey">Usuń stary klucz</span>
         </label>
       </div>
       <div class="settings-group">
-        <label>Key name <span style="font-size:0.75rem;font-weight:400;">(label for generated OpenRouter key)</span></label>
-        <input type="text" id="s-schedKeyName" placeholder="key-manager-auto" style="max-width:300px;">
+        <label>
+          <span data-i18n="keyNameLabel">Nazwa klucza</span>
+          <span style="font-size:0.75rem;font-weight:400;" data-i18n="keyNameHint">&nbsp;(etykieta generowanego klucza OpenRouter)</span>
+        </label>
+        <input type="text" id="s-schedKeyName" data-i18n-placeholder="keyNamePlaceholder" placeholder="key-manager-auto" style="max-width:300px;">
       </div>
       <div id="schedStatus" style="margin-top:8px;font-size:0.82rem;color:var(--muted);"></div>
       <div class="btn-row" style="margin-top:10px;">
-        <button class="btn sm" onclick="schedRunNow()" id="schedRunBtn">⚡ Run now</button>
+        <button class="btn sm" onclick="schedRunNow()" id="schedRunBtn" data-i18n="runNow">⚡ Uruchom teraz</button>
       </div>
     </div>
 
     <div class="card">
-      <div class="section-title">n8n — które credentiale rotować?</div>
-      <p class="info-box" style="margin-bottom:14px;">
+      <div class="section-title" data-i18n="rotTargetsTitle">n8n — które credentials rotować?</div>
+      <p class="info-box" style="margin-bottom:14px;" data-i18n-html="rotTargetsDescHtml">
         Zaznaczone credentiale dostaną nowy klucz przy każdej rotacji.
         Jeśli credential łączy się z lokalnym serwerem LLM, ustaw poniżej jego adres — np. <code style="font-size:0.8em;">http://localhost:1234/v1</code>.
       </p>
       <div class="btn-row" style="margin-bottom:12px;margin-top:0;">
-        <button class="btn sm" onclick="discoverForSettings()" title="Pobiera listę credentials z twojego n8n przez API">📥 Załaduj credentials z n8n</button>
+        <button class="btn sm" onclick="discoverForSettings()" data-i18n="loadFromN8n">📥 Załaduj credentials z n8n</button>
       </div>
-      <div id="rotTargets"><div class="empty" style="padding:14px 0;">
-        Brak credentials. Kliknij <strong>Załaduj credentials z n8n</strong> żeby pobrać listę z twojego n8n.
+      <div id="rotTargets"><div class="empty" style="padding:14px 0;" data-i18n="noTargets">
+        Brak credentials. Kliknij „Załaduj credentials z n8n" żeby pobrać listę z twojego n8n.
       </div></div>
     </div>
 
     <div style="text-align:right; margin-top: 4px;">
-      <button class="btn primary" onclick="saveSettings()">Zapisz ustawienia</button>
+      <button class="btn primary" onclick="saveSettings()" data-i18n="saveSettings">Zapisz ustawienia</button>
     </div>
 
   </div>
@@ -409,6 +433,349 @@ textarea { resize: vertical; min-height: 90px; font-family: monospace; font-size
 <div id="toast"></div>
 
 <script>
+/* ══════════════════════════════════════════════════════════════
+   i18n — two complete language versions (EN / PL)
+══════════════════════════════════════════════════════════════ */
+const STRINGS = {
+  en: {
+    localOnly: 'localhost only · zero deps',
+
+    /* Tabs */
+    tabRotate:      'Key Rotation',
+    tabCredentials: 'n8n Credentials',
+    tabSettings:    '⚙ Settings',
+
+    /* Rotate tab — status card */
+    toolStatus:        'Tool Status',
+    checkKeys:         '🩺 Check keys',
+    checkingKeys:      '🩺 Checking…',
+    noSourcesDetected: 'No sources detected — check Settings.',
+    notConfigured:     'not configured',
+
+    /* Rotate tab — key input card */
+    pasteKeyTitle:       'Paste new API key',
+    pasteKeyPlaceholder: 'Paste new key…',
+    applyAll:            'Apply to all tools',
+    applying:            'Applying…',
+    testKey:             '✓ Test key',
+    testing:             'Testing…',
+    serverAddr:          'Server address:',
+
+    /* History */
+    rotHistory: 'Rotation history',
+    clear:      'Clear',
+
+    /* OpenRouter auto-rotate card */
+    orAutoRotateTitle: '⚡ Auto-rotate — OpenRouter',
+    orInfoBoxHtml:     'OpenRouter has a <strong>Management API</strong> — Key Manager can generate a new key, rotate all sources automatically, and optionally delete the old key.',
+    keyNameOptional:   'Key name (optional)',
+    deleteOldKeyLabel: 'Delete old key',
+    generateRotate:    '🔄 Generate & rotate',
+    generating:        'Generating…',
+
+    /* Credentials tab */
+    credSearchPlaceholder: 'Search by name or type…',
+    refresh:               '↻ Refresh',
+    configureN8n:          'Configure n8n API key in Settings, then refresh.',
+    noCredentialsMatch:    'No credentials match the filter.',
+    credAll:               'All',
+    editBtn:               'Edit ▾',
+
+    /* Credentials form */
+    saveBtn:      'Save',
+    saving:       'Saving…',
+    cancelBtn:    'Cancel',
+    quickFill:    'Quick fill:',
+    getApiKey:    'Get API key —',
+    documentation:'documentation',
+    invalidJson:  'Invalid JSON',
+    requiredFields:'Required: ',
+
+    /* Settings — n8n connection */
+    n8nConnection:  'n8n Connection',
+    apiKeyLabel:    'API Key',
+    apiKeyHint:     '(n8n → Settings → n8n API)',
+    baseUrlLabel:   'Base URL',
+    testConnection: 'Test connection',
+
+    /* Settings — connected tools */
+    connectedTools:    'Connected Tools',
+    connectedToolsDesc:'Tools with a green badge are detected on this machine and automatically receive the new key during rotation. Uncheck to exclude from rotation. For custom install paths, you can enter the file location manually.',
+
+    /* Settings — OpenRouter */
+    orSettingsTitle: 'OpenRouter — auto-rotation',
+    orSettingsBadge: '⚡ Management API',
+    mgmtApiKeyLabel: 'Management API Key',
+    mgmtApiKeyHint:  '(openrouter.ai → Keys → Create management key)',
+
+    /* Settings — Schedule */
+    scheduleTitle:    'Rotation schedule',
+    scheduleRequires: '— requires OpenRouter Management API key',
+    enableSchedule:   'Enable scheduled rotation',
+    every:            'Every',
+    days:             'days',
+    deleteOldKey:     'Delete old key',
+    keyNameLabel:     'Key name',
+    keyNameHint:      '(label for generated OpenRouter key)',
+    keyNamePlaceholder:'key-manager-auto',
+    runNow:           '⚡ Run now',
+    running:          'Running…',
+    schedNextRun:     '⏰ Next run:',
+    schedEnabledMsg:  'Enabled — save settings to set next run',
+    schedDisabled:    'Disabled',
+
+    /* Settings — rotation targets */
+    rotTargetsTitle:   'n8n — which credentials to rotate?',
+    rotTargetsDescHtml:'Checked credentials will receive a new key on every rotation. If the credential connects to a local LLM server, set its address below — e.g. <code style="font-size:0.8em;">http://localhost:1234/v1</code>.',
+    loadFromN8n:       '📥 Load credentials from n8n',
+    noTargets:         'No rotation targets yet — click "Load credentials from n8n".',
+    saveSettings:      'Save settings',
+
+    /* Preset buttons section label (Open Source LLM) */
+    llmServerUrl:    'Open Source LLM server URL — click a preset or type manually:',
+    baseUrlPlaceholder:'Base URL (e.g. http://localhost:1234/v1)',
+
+    /* Driver badges */
+    driverDetected: '✓ detected',
+    driverNotFound: '○ not found',
+    driverEnabled:  'Enabled — click to disable',
+    driverDisabled: 'Disabled — click to enable',
+
+    /* Loading / empty states */
+    loading: 'Loading…',
+
+    /* Toast / status messages */
+    enterKeyFirst:   'Enter a key first',
+    keyTooShort:     'Key too short (min 6 chars)',
+    allUpdated:      '✓ All sources updated',
+    someFailed:      '⚠ Some sources failed',
+    allUpdatedSt:    '✓ All updated',
+    someFailedSt:    '⚠ Some failed',
+    historyCleared:  'History cleared',
+    keyPasted:       'Key pasted',
+    clipboardBlocked:'Clipboard blocked — paste manually (Ctrl+V)',
+    settingsSaved:   '✓ Settings saved',
+    enterN8nKey:     'Enter n8n API key first',
+    cannotReach:     '✗ Cannot reach server — is Key Manager running?',
+
+    /* n8n discover / credentials */
+    allAlreadyIn: 'All %d credential(s) already in the list',
+    addedNew:     'Added %d new credential(s) — check those you want to include',
+    credUpdated:  '✓ "%s" updated',
+    n8nConnected: '✓ Connected — %d credential(s)',
+
+    /* Health badges */
+    healthNoKey:  '⚫ no key',
+    healthFailed: 'Health check failed: ',
+
+    /* Rotation log */
+    rotLogHead:  'Rotation:',
+    orRotated:   '✓ OpenRouter key rotated',
+
+    /* History entries */
+    histSuccess:     '✓ Success',
+    histPartial:     '⚠ Partial',
+    srcOpenRouter:   '⚡ OpenRouter',
+    srcManual:       '✎ manual',
+
+    /* Schedule */
+    schedTriggered: '⚡ Scheduled rotation triggered — check history',
+
+    /* Validation */
+    keyValid:   '✓ Key valid',
+    keyInvalid: '✗ Invalid key',
+
+    /* No schema fallback text */
+    noSchemaLabel: 'Credential data (JSON)',
+    noSchemaReq:   'No built-in schema for "%s" — enter raw JSON',
+  },
+
+  pl: {
+    localOnly: 'tylko lokalnie · zero deps',
+
+    /* Tabs */
+    tabRotate:      'Rotacja kluczy',
+    tabCredentials: 'n8n Credentials',
+    tabSettings:    '⚙ Ustawienia',
+
+    /* Rotate tab — status card */
+    toolStatus:        'Status narzędzi',
+    checkKeys:         '🩺 Sprawdź klucze',
+    checkingKeys:      '🩺 Sprawdzanie…',
+    noSourcesDetected: 'Nie wykryto źródeł — sprawdź Ustawienia.',
+    notConfigured:     'nie skonfigurowano',
+
+    /* Rotate tab — key input card */
+    pasteKeyTitle:       'Wklej nowy klucz API',
+    pasteKeyPlaceholder: 'Wklej nowy klucz…',
+    applyAll:            'Zastosuj we wszystkich narzędziach',
+    applying:            'Zapisywanie…',
+    testKey:             '✓ Przetestuj klucz',
+    testing:             'Testowanie…',
+    serverAddr:          'Adres serwera:',
+
+    /* History */
+    rotHistory: 'Historia rotacji',
+    clear:      'Wyczyść',
+
+    /* OpenRouter auto-rotate card */
+    orAutoRotateTitle: '⚡ Auto-rotate — OpenRouter',
+    orInfoBoxHtml:     'OpenRouter posiada <strong>Management API</strong> — Key Manager może wygenerować nowy klucz, zaktualizować wszystkie źródła automatycznie i opcjonalnie usunąć stary klucz.',
+    keyNameOptional:   'Nazwa klucza (opcjonalnie)',
+    deleteOldKeyLabel: 'Usuń stary klucz',
+    generateRotate:    '🔄 Generuj i rotuj',
+    generating:        'Generowanie…',
+
+    /* Credentials tab */
+    credSearchPlaceholder: 'Szukaj po nazwie lub typie…',
+    refresh:               '↻ Odśwież',
+    configureN8n:          'Skonfiguruj klucz API n8n w Ustawieniach, a następnie odśwież.',
+    noCredentialsMatch:    'Brak credentials pasujących do filtra.',
+    credAll:               'Wszystkie',
+    editBtn:               'Edytuj ▾',
+
+    /* Credentials form */
+    saveBtn:       'Zapisz',
+    saving:        'Zapisywanie…',
+    cancelBtn:     'Anuluj',
+    quickFill:     'Szybkie wypełnienie:',
+    getApiKey:     'Pobierz klucz API —',
+    documentation: 'dokumentacja',
+    invalidJson:   'Nieprawidłowy JSON',
+    requiredFields:'Wymagane: ',
+
+    /* Settings — n8n connection */
+    n8nConnection:  'Połączenie z n8n',
+    apiKeyLabel:    'Klucz API',
+    apiKeyHint:     '(n8n → Settings → n8n API)',
+    baseUrlLabel:   'Adres (Base URL)',
+    testConnection: 'Testuj połączenie',
+
+    /* Settings — connected tools */
+    connectedTools:    'Podłączone narzędzia',
+    connectedToolsDesc:'Narzędzia z zielonym znaczkiem są wykryte na tym komputerze i automatycznie otrzymują nowy klucz przy rotacji. Odznacz, żeby wykluczyć z rotacji. Dla niestandardowych ścieżek instalacji możesz ręcznie podać lokalizację pliku.',
+
+    /* Settings — OpenRouter */
+    orSettingsTitle: 'OpenRouter — automatyczna rotacja',
+    orSettingsBadge: '⚡ Management API',
+    mgmtApiKeyLabel: 'Management API Key',
+    mgmtApiKeyHint:  '(openrouter.ai → Keys → Create management key)',
+
+    /* Settings — Schedule */
+    scheduleTitle:    'Harmonogram rotacji',
+    scheduleRequires: '— wymaga klucza OpenRouter Management API',
+    enableSchedule:   'Włącz automatyczną rotację',
+    every:            'Co',
+    days:             'dni',
+    deleteOldKey:     'Usuń stary klucz',
+    keyNameLabel:     'Nazwa klucza',
+    keyNameHint:      '(etykieta generowanego klucza OpenRouter)',
+    keyNamePlaceholder:'key-manager-auto',
+    runNow:           '⚡ Uruchom teraz',
+    running:          'Uruchamianie…',
+    schedNextRun:     '⏰ Następny termin:',
+    schedEnabledMsg:  'Włączono — zapisz ustawienia, aby ustawić następny termin',
+    schedDisabled:    'Wyłączono',
+
+    /* Settings — rotation targets */
+    rotTargetsTitle:   'n8n — które credentials rotować?',
+    rotTargetsDescHtml:'Zaznaczone credentiale dostaną nowy klucz przy każdej rotacji. Jeśli credential łączy się z lokalnym serwerem LLM, ustaw poniżej jego adres — np. <code style="font-size:0.8em;">http://localhost:1234/v1</code>.',
+    loadFromN8n:       '📥 Załaduj credentials z n8n',
+    noTargets:         'Brak credentials. Kliknij „Załaduj credentials z n8n" żeby pobrać listę z twojego n8n.',
+    saveSettings:      'Zapisz ustawienia',
+
+    /* Preset buttons section label (Open Source LLM) */
+    llmServerUrl:     'Adres serwera Open Source LLM — kliknij preset lub wpisz ręcznie:',
+    baseUrlPlaceholder:'Base URL (np. http://localhost:1234/v1)',
+
+    /* Driver badges */
+    driverDetected: '✓ wykryty',
+    driverNotFound: '○ nie znaleziono',
+    driverEnabled:  'Włączony — kliknij, żeby wyłączyć',
+    driverDisabled: 'Wyłączony — kliknij, żeby włączyć',
+
+    /* Loading / empty states */
+    loading: 'Ładowanie…',
+
+    /* Toast / status messages */
+    enterKeyFirst:   'Najpierw wpisz klucz',
+    keyTooShort:     'Klucz za krótki (min. 6 znaków)',
+    allUpdated:      '✓ Wszystkie źródła zaktualizowane',
+    someFailed:      '⚠ Niektóre źródła nieudane',
+    allUpdatedSt:    '✓ Wszystkie zaktualizowane',
+    someFailedSt:    '⚠ Niektóre nieudane',
+    historyCleared:  'Historia wyczyszczona',
+    keyPasted:       'Klucz wklejony',
+    clipboardBlocked:'Schowek zablokowany — wklej ręcznie (Ctrl+V)',
+    settingsSaved:   '✓ Ustawienia zapisane',
+    enterN8nKey:     'Najpierw wpisz klucz API n8n',
+    cannotReach:     '✗ Nie można połączyć — czy Key Manager działa?',
+
+    /* n8n discover / credentials */
+    allAlreadyIn: 'Wszystkie %d credential(s) już na liście',
+    addedNew:     'Dodano %d nowych credential(s) — zaznacz te, które chcesz uwzględnić',
+    credUpdated:  '✓ „%s" zaktualizowano',
+    n8nConnected: '✓ Połączono — %d credential(s)',
+
+    /* Health badges */
+    healthNoKey:  '⚫ brak klucza',
+    healthFailed: 'Sprawdzanie kluczy nieudane: ',
+
+    /* Rotation log */
+    rotLogHead:  'Rotacja:',
+    orRotated:   '✓ Klucz OpenRouter zmieniony',
+
+    /* History entries */
+    histSuccess:   '✓ Sukces',
+    histPartial:   '⚠ Częściowy',
+    srcOpenRouter: '⚡ OpenRouter',
+    srcManual:     '✎ ręcznie',
+
+    /* Schedule */
+    schedTriggered: '⚡ Rotacja harmonogramu uruchomiona — sprawdź historię',
+
+    /* Validation */
+    keyValid:   '✓ Klucz poprawny',
+    keyInvalid: '✗ Klucz nieprawidłowy',
+
+    /* No schema fallback text */
+    noSchemaLabel: 'Dane credentials (JSON)',
+    noSchemaReq:   'Brak wbudowanego schematu dla „%s" — wprowadź surowy JSON',
+  }
+};
+
+/* ── Language helpers ────────────────────────────────────────── */
+let LANG = localStorage.getItem('km_lang') || 'pl';
+
+function S(key) {
+  return STRINGS[LANG]?.[key] ?? STRINGS.en[key] ?? key;
+}
+
+function applyI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = S(el.dataset.i18n);
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    el.innerHTML = S(el.dataset.i18nHtml);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    el.placeholder = S(el.dataset.i18nPlaceholder);
+  });
+}
+
+function switchLang(lang) {
+  LANG = lang;
+  localStorage.setItem('km_lang', lang);
+  document.documentElement.lang = lang;
+  document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+  document.getElementById('lang-pl').classList.toggle('active', lang === 'pl');
+  applyI18n();
+  // Re-render dynamic sections with new language
+  loadStatus();
+  loadHistory();
+  if (allCreds.length) { buildFilters(); renderCreds(); }
+}
+
 /* ── Globals ─────────────────────────────────────────────────── */
 let schemas    = {};
 let allCreds   = [];
@@ -458,8 +825,8 @@ async function pasteKey() {
   try {
     const t = await navigator.clipboard.readText();
     document.getElementById('newKey').value = t.trim();
-    toast('Key pasted', 'ok');
-  } catch { toast('Clipboard blocked — paste manually (Ctrl+V)', 'error'); }
+    toast(S('keyPasted'), 'ok');
+  } catch { toast(S('clipboardBlocked'), 'error'); }
 }
 
 /* ── Status ──────────────────────────────────────────────────── */
@@ -467,21 +834,20 @@ async function loadStatus() {
   try {
     const all = await fetch('/api/status').then(r => r.json());
 
-    // Group visible drivers by group (only show detected+enabled, always show n8n)
     const groups = {};
     for (const s of all) {
       if (s.id === 'n8n') { (groups['n8n'] = groups['n8n'] || []).push(s); continue; }
-      if (!s.exists || !s.enabled) continue;   // skip not-installed auto-detect drivers
+      if (!s.exists || !s.enabled) continue;
       (groups[s.group] = groups[s.group] || []).push(s);
     }
 
-    // Order: Editors → AI Tools → Custom → n8n
     const ORDER = ['Editors', 'AI Tools', 'Custom', 'n8n'];
     const sortedGroups = Object.entries(groups).sort(([a],[b]) =>
       (ORDER.indexOf(a) + 1 || 99) - (ORDER.indexOf(b) + 1 || 99));
 
     if (!sortedGroups.length) {
-      document.getElementById('sources').innerHTML = '<div class="empty" style="padding:16px 0;">No sources detected — check Settings.</div>';
+      document.getElementById('sources').innerHTML =
+        `<div class="empty" style="padding:16px 0;">${esc(S('noSourcesDetected'))}</div>`;
       return;
     }
 
@@ -503,7 +869,7 @@ async function loadStatus() {
           <div class="source-label">${esc(s.label)}</div>
           <div class="source-preview">${s.preview
             ? esc(s.preview)
-            : '<span style="color:var(--err);font-size:0.78rem;">not configured</span>'}</div>
+            : `<span style="color:var(--err);font-size:0.78rem;">${esc(S('notConfigured'))}</span>`}</div>
         </div>`;
       }).join('')
     ).join('');
@@ -513,12 +879,12 @@ async function loadStatus() {
 /* ── Rotation ────────────────────────────────────────────────── */
 async function rotate() {
   const key = (document.getElementById('newKey').value || '').trim();
-  if (!key)           { toast('Enter a key first', 'error'); return; }
-  if (key.length < 6) { toast('Key too short (min 6 chars)', 'error'); return; }
+  if (!key)           { toast(S('enterKeyFirst'), 'error'); return; }
+  if (key.length < 6) { toast(S('keyTooShort'), 'error'); return; }
 
   const btn = document.getElementById('rotateBtn');
   const st  = document.getElementById('rotStatus');
-  btn.disabled = true; btn.textContent = 'Applying…'; st.textContent = '';
+  btn.disabled = true; btn.textContent = S('applying'); st.textContent = '';
 
   try {
     const res = await fetch('/api/rotate', {
@@ -529,7 +895,7 @@ async function rotate() {
     const log = document.getElementById('log');
     log.style.display = 'block';
     log.innerHTML =
-      `<div class="log-head">Rotation: ${esc(key.slice(0, 14))}…</div>` +
+      `<div class="log-head">${esc(S('rotLogHead'))} ${esc(key.slice(0, 14))}…</div>` +
       res.results.map(x => `
         <div class="log-entry ${x.ok ? 'log-ok' : 'log-err'}">
           <span>${x.ok ? '✓' : '✗'}</span><span>${esc(x.label)}</span>
@@ -539,24 +905,24 @@ async function rotate() {
       `).join('');
 
     const allOk = res.results.every(r => r.ok);
-    st.textContent = allOk ? '✓ All updated' : '⚠ Some failed';
+    st.textContent = allOk ? S('allUpdatedSt') : S('someFailedSt');
     st.style.color  = allOk ? 'var(--ok)' : 'var(--warn)';
-    toast(allOk ? '✓ All sources updated' : '⚠ Some sources failed', allOk ? 'ok' : 'error');
+    toast(allOk ? S('allUpdated') : S('someFailed'), allOk ? 'ok' : 'error');
     loadStatus();
     loadHistory();
   } catch(e) { toast('Error: ' + e.message, 'error'); }
-  finally    { btn.disabled = false; btn.textContent = 'Apply to all sources'; }
+  finally    { btn.disabled = false; btn.textContent = S('applyAll'); }
 }
 
 /* ── Key validation ──────────────────────────────────────────── */
 async function validateKey() {
   const key = (document.getElementById('newKey').value || '').trim();
   const url = (document.getElementById('validateUrl').value || '').trim() || 'http://localhost:1234/v1';
-  if (!key) { toast('Enter a key first', 'error'); return; }
+  if (!key) { toast(S('enterKeyFirst'), 'error'); return; }
 
   const btn = document.getElementById('validateBtn');
   const st  = document.getElementById('rotStatus');
-  btn.disabled = true; btn.textContent = 'Testing…'; st.textContent = '';
+  btn.disabled = true; btn.textContent = S('testing'); st.textContent = '';
 
   const res = await fetch('/api/validate-key', {
     method: 'POST', headers: {'Content-Type':'application/json'},
@@ -564,55 +930,53 @@ async function validateKey() {
   }).then(r => r.json()).catch(e => ({ ok: false, message: e.message }));
 
   if (res.ok) {
-    st.textContent = '✓ ' + (res.message || 'Key valid');
+    st.textContent = S('keyValid') + (res.message ? ' — ' + res.message : '');
     st.style.color  = 'var(--ok)';
-    toast('✓ ' + (res.message || 'Key valid'), 'ok');
+    toast(S('keyValid'), 'ok');
   } else {
-    st.textContent = '✗ ' + (res.message || 'Invalid key');
+    st.textContent = S('keyInvalid') + (res.message ? ' — ' + res.message : '');
     st.style.color  = 'var(--err)';
-    toast('✗ ' + (res.message || 'Invalid key'), 'error');
+    toast(S('keyInvalid'), 'error');
   }
-  btn.disabled = false; btn.textContent = '✓ Test key';
+  btn.disabled = false; btn.textContent = S('testKey');
 }
 
 /* ── Key health dashboard ────────────────────────────────────── */
 async function checkHealth() {
   const url = (document.getElementById('validateUrl').value || 'http://localhost:1234/v1').trim();
   const btn = document.getElementById('healthBtn');
-  btn.disabled = true; btn.textContent = '🩺 Checking…';
+  btn.disabled = true; btn.textContent = S('checkingKeys');
 
-  // Remove stale badges from a previous check
   document.querySelectorAll('.health-badge').forEach(b => b.remove());
 
   try {
     const data = await fetch('/api/health?url=' + encodeURIComponent(url)).then(r => r.json());
     if (!data.drivers) throw new Error(data.error || 'Unexpected response');
 
-    // Build a lookup of visible rows by driver id
     const rowMap = {};
     document.querySelectorAll('[data-driver-id]').forEach(r => { rowMap[r.dataset.driverId] = r; });
 
     let valid = 0, invalid = 0, notSet = 0;
     for (const d of data.drivers) {
       const row = rowMap[d.id];
-      if (!row) continue;   // driver not shown in status panel (not installed / disabled)
+      if (!row) continue;
       let badge = '';
-      if      (d.status === 'valid')   { badge = `<span class="health-badge valid">✓ valid</span>`;                                 valid++;  }
-      else if (d.status === 'invalid') { badge = `<span class="health-badge invalid">✗ ${esc(d.message || 'invalid')}</span>`;      invalid++; }
-      else if (d.status === 'not_set') { badge = `<span class="health-badge not-set">⚫ no key</span>`;                             notSet++; }
+      if      (d.status === 'valid')   { badge = `<span class="health-badge valid">✓ valid</span>`;                                   valid++;   }
+      else if (d.status === 'invalid') { badge = `<span class="health-badge invalid">✗ ${esc(d.message || 'invalid')}</span>`;        invalid++; }
+      else if (d.status === 'not_set') { badge = `<span class="health-badge not-set">${esc(S('healthNoKey'))}</span>`;                notSet++;  }
       if (badge) row.insertAdjacentHTML('beforeend', badge);
     }
 
     const parts = [
       valid   ? `${valid} valid`    : '',
       invalid ? `${invalid} invalid` : '',
-      notSet  ? `${notSet} no key`   : '',
+      notSet  ? `${notSet} ${S('healthNoKey')}` : '',
     ].filter(Boolean);
     toast('🩺 ' + (parts.join(' · ') || 'No keys to check'), invalid ? 'error' : 'ok');
   } catch(e) {
-    toast('Health check failed: ' + e.message, 'error');
+    toast(S('healthFailed') + e.message, 'error');
   }
-  btn.disabled = false; btn.textContent = '🩺 Check health';
+  btn.disabled = false; btn.textContent = S('checkKeys');
 }
 
 /* ── Rotation history ────────────────────────────────────────── */
@@ -625,11 +989,11 @@ async function loadHistory() {
   wrap.style.display = 'block';
   el.innerHTML = h.map(e => {
     const dt = new Date(e.ts).toLocaleString(undefined, { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
-    const okColor = e.ok ? 'var(--ok)' : 'var(--warn)';
-    const srcLabel = e.source === 'openrouter' ? '⚡ OpenRouter' : '✎ manual';
+    const okColor  = e.ok ? 'var(--ok)' : 'var(--warn)';
+    const srcLabel = e.source === 'openrouter' ? S('srcOpenRouter') : S('srcManual');
     return `<div class="hist-entry">
       <div class="hist-header">
-        <span class="hist-status" style="color:${okColor};">${e.ok ? '✓ Success' : '⚠ Partial'}</span>
+        <span class="hist-status" style="color:${okColor};">${e.ok ? S('histSuccess') : S('histPartial')}</span>
         <span class="hist-ts">${esc(dt)}</span>
       </div>
       <div class="hist-key">${esc(e.keyPreview || '—')}<span class="hist-source">${esc(srcLabel)}</span></div>
@@ -644,27 +1008,27 @@ async function clearHistory() {
   await fetch('/api/history/clear', { method: 'POST' }).catch(() => {});
   document.getElementById('historyWrap').style.display = 'none';
   document.getElementById('historyList').innerHTML = '';
-  toast('History cleared', 'ok');
+  toast(S('historyCleared'), 'ok');
 }
 
 /* ── Scheduler ───────────────────────────────────────────────── */
 async function schedRunNow() {
   const btn = document.getElementById('schedRunBtn');
-  btn.disabled = true; btn.textContent = 'Running…';
+  btn.disabled = true; btn.textContent = S('running');
   const res = await fetch('/api/schedule/run-now', { method: 'POST' })
     .then(r => r.json()).catch(e => ({ ok: false, error: e.message }));
   if (res.ok) {
-    toast('⚡ Scheduled rotation triggered — check history', 'ok');
+    toast(S('schedTriggered'), 'ok');
     setTimeout(() => { loadHistory(); loadStatus(); }, 3000);
   } else {
     toast('✗ ' + res.error, 'error');
   }
-  btn.disabled = false; btn.textContent = '⚡ Run now';
+  btn.disabled = false; btn.textContent = S('runNow');
 }
 
 /* ── Credentials pane ───────────────────────────────────────── */
 async function loadCredentials() {
-  document.getElementById('credList').innerHTML    = '<div class="loading">Loading…</div>';
+  document.getElementById('credList').innerHTML    = `<div class="loading">${esc(S('loading'))}</div>`;
   document.getElementById('typeFilters').innerHTML = '';
   allCreds = [];
 
@@ -679,7 +1043,7 @@ async function loadCredentials() {
   if (!d.ok) {
     document.getElementById('credList').innerHTML =
       `<div class="error-box">⚠ ${esc(d.error)}</div>
-       <p class="info-box">Configure the n8n API key in <a href="#" onclick="switchTab('settings');return false;">Settings</a>.</p>`;
+       <p class="info-box">${esc(S('configureN8n'))} <a href="#" onclick="switchTab('settings');return false;">Settings</a>.</p>`;
     return;
   }
 
@@ -691,7 +1055,7 @@ async function loadCredentials() {
 function buildFilters() {
   const types = [...new Set(allCreds.map(c => c.type))];
   document.getElementById('typeFilters').innerHTML =
-    `<button class="type-chip active" data-type="all" onclick="setFilter('all')">All (${allCreds.length})</button>` +
+    `<button class="type-chip active" data-type="all" onclick="setFilter('all')">${esc(S('credAll'))} (${allCreds.length})</button>` +
     types.map(t => {
       const label = schemas[t]?.label || t;
       const cnt   = allCreds.filter(c => c.type === t).length;
@@ -715,7 +1079,7 @@ function renderCreds() {
   );
 
   if (!list.length) {
-    document.getElementById('credList').innerHTML = '<div class="empty">No credentials match the filter.</div>';
+    document.getElementById('credList').innerHTML = `<div class="empty">${esc(S('noCredentialsMatch'))}</div>`;
     return;
   }
 
@@ -727,7 +1091,7 @@ function renderCreds() {
           <span class="type-badge" style="background:${typeColor(c.type)}">${esc(c.typeLabel)}</span>
           ${!c.schemaKnown ? '<span class="badge-custom">custom schema</span>' : ''}
         </div>
-        <button class="btn sm" onclick="toggleForm('${escA(c.id)}','${escA(c.type)}','${escA(c.name)}')">Edit ▾</button>
+        <button class="btn sm" onclick="toggleForm('${escA(c.id)}','${escA(c.type)}','${escA(c.name)}')">${esc(S('editBtn'))}</button>
       </div>
       <div class="cred-form" id="cf-${escA(c.id)}" style="display:none;"></div>
     </div>
@@ -744,10 +1108,10 @@ function toggleForm(id, type, name) {
 
   if (schema) {
     if (schema.docsUrl) {
-      html += `<div class="docs-bar">📖 <a href="${escA(schema.docsUrl)}" target="_blank" rel="noopener">Get API key — ${esc(schema.label)} documentation</a></div>`;
+      html += `<div class="docs-bar">📖 <a href="${escA(schema.docsUrl)}" target="_blank" rel="noopener">${esc(S('getApiKey'))} ${esc(schema.label)} ${esc(S('documentation'))}</a></div>`;
     }
     if (schema.servicePresets?.length) {
-      html += `<div class="svc-presets"><span class="svc-label">Quick fill:</span>` +
+      html += `<div class="svc-presets"><span class="svc-label">${esc(S('quickFill'))}</span>` +
         schema.servicePresets.map((p, pi) =>
           `<button type="button" class="svc-chip" id="svc-${escA(id)}-${pi}" onclick="applySvcPreset('${escA(id)}','${escA(type)}',${pi})">${esc(p.icon||'')} ${esc(p.name)}</button>`
         ).join('') + `</div>`;
@@ -769,16 +1133,16 @@ function toggleForm(id, type, name) {
     }).join('');
   } else {
     html = `<div class="field-row">
-      <label>Credential data (JSON) <span class="req">*</span>
-        <span class="hint">No built-in schema for "${esc(type)}" — enter raw JSON</span>
+      <label>${esc(S('noSchemaLabel'))} <span class="req">*</span>
+        <span class="hint">${esc(S('noSchemaReq').replace('%s', type))}</span>
       </label>
       <textarea id="ff-${escA(id)}-json" placeholder='{\n  "apiKey": "..."\n}' spellcheck="false"></textarea>
     </div>`;
   }
 
   html += `<div class="form-actions">
-    <button class="btn primary" id="savebtn-${escA(id)}" onclick="saveCred('${escA(id)}','${escA(type)}','${escA(name)}')">Save</button>
-    <button class="btn" onclick="document.getElementById('cf-${escA(id)}').style.display='none'">Cancel</button>
+    <button class="btn primary" id="savebtn-${escA(id)}" onclick="saveCred('${escA(id)}','${escA(type)}','${escA(name)}')">${esc(S('saveBtn'))}</button>
+    <button class="btn" onclick="document.getElementById('cf-${escA(id)}').style.display='none'">${esc(S('cancelBtn'))}</button>
   </div>`;
 
   el.innerHTML = html;
@@ -799,7 +1163,7 @@ function applySvcPreset(id, type, presetIdx) {
   if (hlInput && preset.placeholder !== undefined) hlInput.placeholder = preset.placeholder || '';
   const docsBar = document.querySelector(`#cf-${id} .docs-bar`);
   if (preset.docsUrl) {
-    const docsHtml = `📖 <a href="${escA(preset.docsUrl)}" target="_blank" rel="noopener">Get API key — ${esc(preset.name)} documentation</a>`;
+    const docsHtml = `📖 <a href="${escA(preset.docsUrl)}" target="_blank" rel="noopener">${esc(S('getApiKey'))} ${esc(preset.name)} ${esc(S('documentation'))}</a>`;
     if (docsBar) docsBar.innerHTML = docsHtml;
     else { const bar = document.createElement('div'); bar.className = 'docs-bar'; bar.innerHTML = docsHtml; document.getElementById('cf-' + id)?.insertAdjacentElement('afterbegin', bar); }
   }
@@ -816,22 +1180,22 @@ async function saveCred(id, type, name) {
       if (val !== undefined && val !== '') data[f.key] = val;
     }
     const missing = schema.fields.filter(f => f.required && !('default' in f) && !data[f.key]);
-    if (missing.length) { toast('Required: ' + missing.map(f => f.label).join(', '), 'error'); return; }
+    if (missing.length) { toast(S('requiredFields') + missing.map(f => f.label).join(', '), 'error'); return; }
   } else {
     try   { data = JSON.parse(document.getElementById(`ff-${id}-json`).value); }
-    catch { toast('Invalid JSON', 'error'); return; }
+    catch { toast(S('invalidJson'), 'error'); return; }
   }
 
   const btn = document.getElementById('savebtn-' + id);
-  btn.disabled = true; btn.textContent = 'Saving…';
+  btn.disabled = true; btn.textContent = S('saving');
   try {
     const res = await fetch(`/api/n8n/credentials/${id}`, {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ name, type, data })
     }).then(r => r.json());
-    if (res.ok) { toast(`✓ "${name}" updated`, 'ok'); document.getElementById('cf-' + id).style.display = 'none'; }
-    else { toast('✗ ' + res.error, 'error'); btn.disabled = false; btn.textContent = 'Save'; }
-  } catch(e) { toast('Error: ' + e.message, 'error'); btn.disabled = false; btn.textContent = 'Save'; }
+    if (res.ok) { toast(S('credUpdated').replace('%s', name), 'ok'); document.getElementById('cf-' + id).style.display = 'none'; }
+    else { toast('✗ ' + res.error, 'error'); btn.disabled = false; btn.textContent = S('saveBtn'); }
+  } catch(e) { toast('Error: ' + e.message, 'error'); btn.disabled = false; btn.textContent = S('saveBtn'); }
 }
 
 /* ── Settings pane ───────────────────────────────────────────── */
@@ -847,7 +1211,6 @@ async function loadSettings() {
     const orCard = document.getElementById('orCard');
     if (orCard) orCard.style.display = cfg.openRouterMgmtKey ? 'block' : 'none';
 
-    // Schedule
     const sc = cfg.schedule || {};
     document.getElementById('s-schedEnabled').checked   = !!sc.enabled;
     document.getElementById('s-schedDays').value        = sc.intervalDays || 7;
@@ -856,10 +1219,10 @@ async function loadSettings() {
     const schedSt = document.getElementById('schedStatus');
     if (sc.enabled && sc.nextRunAt) {
       const next = new Date(sc.nextRunAt);
-      schedSt.innerHTML = `⏰ Next run: <strong>${next.toLocaleString()}</strong>`;
+      schedSt.innerHTML = `${esc(S('schedNextRun'))} <strong>${next.toLocaleString()}</strong>`;
       schedSt.style.color = 'var(--ok)';
     } else {
-      schedSt.textContent = sc.enabled ? 'Enabled — save settings to set next run' : 'Disabled';
+      schedSt.textContent = sc.enabled ? S('schedEnabledMsg') : S('schedDisabled');
       schedSt.style.color = 'var(--muted)';
     }
 
@@ -869,7 +1232,6 @@ async function loadSettings() {
 }
 
 function renderDriverSettings(drivers) {
-  // Group by group field
   const groups = {};
   const ORDER  = ['AI Tools', 'Editors', 'Custom'];
   for (const d of drivers) (groups[d.group] = groups[d.group] || []).push(d);
@@ -885,8 +1247,9 @@ function renderDriverSettings(drivers) {
           <span class="driver-icon">${esc(d.icon)}</span>
           <span class="driver-name" title="${escA(d.currentPath || d.defaultPath)}">${esc(d.label)}</span>
         </div>
-        <span class="driver-badge ${d.detected ? 'detected' : 'missing'}">${d.detected ? '✓ detected' : '○ not found'}</span>
-        <label class="toggle" title="${d.enabled ? 'Enabled — click to disable' : 'Disabled — click to enable'}">
+        <span class="driver-badge ${d.detected ? 'detected' : 'missing'}"
+              data-i18n="${d.detected ? 'driverDetected' : 'driverNotFound'}">${d.detected ? S('driverDetected') : S('driverNotFound')}</span>
+        <label class="toggle" title="${d.enabled ? S('driverEnabled') : S('driverDisabled')}">
           <input type="checkbox" class="driver-enable-cb" data-id="${escA(d.id)}" ${d.enabled ? 'checked' : ''}>
           <span class="toggle-track"></span>
           <span class="toggle-thumb"></span>
@@ -916,8 +1279,8 @@ const LLM_PRESETS = [
 ];
 
 function presetBtnsHtml() {
-  return `<div style="font-size:0.75rem;color:var(--muted);margin-bottom:5px;margin-top:2px;">
-    Adres serwera (Base URL) — kliknij preset lub wpisz ręcznie:
+  return `<div data-i18n="llmServerUrl" style="font-size:0.75rem;color:var(--muted);margin-bottom:5px;margin-top:2px;">
+    ${esc(S('llmServerUrl'))}
   </div>
   <div class="preset-btns">` +
     LLM_PRESETS.map(p => `<button type="button" class="preset-btn"
@@ -929,7 +1292,7 @@ function presetBtnsHtml() {
 function renderRotTargets(targets) {
   const el = document.getElementById('rotTargets');
   if (!targets.length) {
-    el.innerHTML = '<div class="empty" style="padding:12px 0;">No rotation targets yet — click "Load from n8n".</div>';
+    el.innerHTML = `<div class="empty" style="padding:12px 0;" data-i18n="noTargets">${esc(S('noTargets'))}</div>`;
     return;
   }
   el.innerHTML = targets.map(c => `
@@ -943,7 +1306,8 @@ function renderRotTargets(targets) {
       <div class="rot-url-wrap">
         ${presetBtnsHtml()}
         <input type="url" class="rot-url-input" value="${escA(c.baseUrl || '')}"
-               placeholder="Base URL (e.g. http://localhost:1234/v1)">
+               data-i18n-placeholder="baseUrlPlaceholder"
+               placeholder="${escA(S('baseUrlPlaceholder'))}">
       </div>
     </div>
   `).join('');
@@ -952,7 +1316,7 @@ function renderRotTargets(targets) {
 async function discoverForSettings() {
   const key = (document.getElementById('s-apiKey').value || '').trim();
   const url = (document.getElementById('s-baseUrl').value || '').trim() || 'http://localhost:5678';
-  if (!key) { toast('Enter n8n API key first', 'error'); return; }
+  if (!key) { toast(S('enterN8nKey'), 'error'); return; }
 
   await fetch('/api/config', { method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ n8nApiKey: key, n8nBaseUrl: url }) });
@@ -965,7 +1329,10 @@ async function discoverForSettings() {
   const existing = new Set([...document.querySelectorAll('#rotTargets .rot-item')].map(el => el.dataset.credId).filter(Boolean));
   const newCreds = d.credentials.filter(c => !existing.has(c.id));
 
-  if (!newCreds.length) { toast(`All ${d.credentials.length} credential(s) already in the list`, 'ok'); return; }
+  if (!newCreds.length) {
+    toast(S('allAlreadyIn').replace('%d', d.credentials.length), 'ok');
+    return;
+  }
 
   const container = document.getElementById('rotTargets');
   container.querySelector('.empty')?.remove();
@@ -977,30 +1344,35 @@ async function discoverForSettings() {
         <span class="type-badge" style="background:${typeColor(c.type)};font-size:0.7rem;padding:2px 7px;">${esc(c.type)}</span>
         <button class="btn sm danger" onclick="this.closest('.rot-item').remove()">✕</button>
       </div>
-      <div class="rot-url-wrap">${presetBtnsHtml()}<input type="url" class="rot-url-input" placeholder="Base URL (e.g. http://localhost:1234/v1)"></div>
+      <div class="rot-url-wrap">
+        ${presetBtnsHtml()}
+        <input type="url" class="rot-url-input"
+               data-i18n-placeholder="baseUrlPlaceholder"
+               placeholder="${escA(S('baseUrlPlaceholder'))}">
+      </div>
     </div>
   `).join(''));
-  toast(`Added ${newCreds.length} new credential(s) — check those you want to include`, 'ok');
+  toast(S('addedNew').replace('%d', newCreds.length), 'ok');
 }
 
 async function testN8n() {
   const key = (document.getElementById('s-apiKey').value || '').trim();
   const url = (document.getElementById('s-baseUrl').value || '').trim() || 'http://localhost:5678';
-  if (!key) { toast('Enter n8n API key first', 'error'); return; }
+  if (!key) { toast(S('enterN8nKey'), 'error'); return; }
 
   const btn = document.querySelector('#pane-settings button[onclick="testN8n()"]');
-  if (btn) { btn.disabled = true; btn.textContent = 'Testing…'; }
+  if (btn) { btn.disabled = true; btn.textContent = S('testing'); }
 
   try {
     await fetch('/api/config', { method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ n8nApiKey: key, n8nBaseUrl: url }) });
     const d = await fetch('/api/n8n/discover').then(r => r.json()).catch(e => ({ ok:false, error:e.message }));
-    if (d.ok) toast(`✓ Connected — ${d.credentials.length} credential(s)`, 'ok');
+    if (d.ok) toast(S('n8nConnected').replace('%d', d.credentials.length), 'ok');
     else      toast('✗ ' + d.error, 'error');
   } catch(e) {
-    toast('✗ Cannot reach server — is Key Manager running?', 'error');
+    toast(S('cannotReach'), 'error');
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = 'Test connection'; }
+    if (btn) { btn.disabled = false; btn.textContent = S('testConnection'); }
   }
 }
 
@@ -1008,19 +1380,16 @@ async function saveSettings() {
   const apiKey  = (document.getElementById('s-apiKey').value  || '').trim();
   const baseUrl = (document.getElementById('s-baseUrl').value || '').trim();
 
-  // Collect driver enabled states
   const driverEnabled = {};
   document.querySelectorAll('.driver-enable-cb').forEach(cb => {
     driverEnabled[cb.dataset.id] = cb.checked;
   });
 
-  // Collect all driver paths
   const paths = {};
   document.querySelectorAll('.driver-path-input').forEach(inp => {
     paths[inp.dataset.id] = inp.value.trim();
   });
 
-  // Collect rotation targets
   const n8nCredentials = [];
   document.querySelectorAll('#rotTargets .rot-item').forEach(el => {
     const cbx = el.querySelector('.rot-check');
@@ -1045,14 +1414,14 @@ async function saveSettings() {
     method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
   }).then(r => r.json()).catch(e => ({ ok:false, error:e.message }));
 
-  if (res.ok) { toast('✓ Settings saved', 'ok'); loadStatus(); }
+  if (res.ok) { toast(S('settingsSaved'), 'ok'); loadStatus(); }
   else        { toast('✗ ' + res.error, 'error'); }
 }
 
 /* ── OpenRouter auto-rotate ──────────────────────────────────── */
 async function orAutoRotate() {
   const btn = document.getElementById('orRotateBtn');
-  btn.disabled = true; btn.textContent = 'Generating…';
+  btn.disabled = true; btn.textContent = S('generating');
 
   const res = await fetch('/api/openrouter/rotate', {
     method: 'POST', headers: {'Content-Type':'application/json'},
@@ -1067,7 +1436,7 @@ async function orAutoRotate() {
 
   if (!res.ok && !res.results) {
     logEl.innerHTML = `<div class="error-box">✗ ${esc(res.error)}</div>`;
-    btn.disabled = false; btn.textContent = '🔄 Generate & rotate';
+    btn.disabled = false; btn.textContent = S('generateRotate');
     return;
   }
 
@@ -1084,13 +1453,17 @@ async function orAutoRotate() {
       <span>${res.deleteResult.ok?'✓':'✗'}</span><span>${esc(res.deleteResult.detail||res.deleteResult.error||'')}</span>
     </div>` : '');
 
-  toast(res.ok ? '✓ OpenRouter key rotated' : '⚠ Some sources failed', res.ok ? 'ok' : 'error');
+  toast(res.ok ? S('orRotated') : S('someFailed'), res.ok ? 'ok' : 'error');
   loadStatus();
   loadHistory();
-  btn.disabled = false; btn.textContent = '🔄 Generate & rotate';
+  btn.disabled = false; btn.textContent = S('generateRotate');
 }
 
 /* ── Init ────────────────────────────────────────────────────── */
+// Mark active lang button & apply language if not default PL
+document.getElementById('lang-' + LANG).classList.add('active');
+if (LANG !== 'pl') applyI18n();
+
 loadStatus();
 loadSettings();
 loadHistory();
