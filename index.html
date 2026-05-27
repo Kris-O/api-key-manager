@@ -222,9 +222,9 @@ textarea { resize: vertical; min-height: 90px; font-family: monospace; font-size
   </header>
 
   <div class="tabs">
-    <button class="tab-btn active" data-tab="rotate"      onclick="switchTab('rotate')">Key Rotation</button>
+    <button class="tab-btn active" data-tab="rotate"      onclick="switchTab('rotate')">Rotacja kluczy</button>
     <button class="tab-btn"        data-tab="credentials" onclick="switchTab('credentials')">n8n Credentials</button>
-    <button class="tab-btn"        data-tab="settings"    onclick="switchTab('settings')">⚙ Settings</button>
+    <button class="tab-btn"        data-tab="settings"    onclick="switchTab('settings')">⚙ Ustawienia</button>
   </div>
 
   <!-- ══════════════════════════════════════════════════════════
@@ -234,9 +234,9 @@ textarea { resize: vertical; min-height: 90px; font-family: monospace; font-size
 
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-        <span class="section-title" style="margin-bottom:0;">Sources status</span>
+        <span class="section-title" style="margin-bottom:0;">Status narzędzi</span>
         <button class="btn sm" id="healthBtn" onclick="checkHealth()"
-                title="Validate each stored key against the Test URL (set below)">🩺 Check health</button>
+                title="Sprawdza czy klucz zapisany w każdym narzędziu działa (ping /v1/models)">🩺 Sprawdź klucze</button>
       </div>
       <div id="sources">
         <div class="source-row"><div class="dot warn"></div><div class="source-label">Loading…</div></div>
@@ -244,21 +244,21 @@ textarea { resize: vertical; min-height: 90px; font-family: monospace; font-size
     </div>
 
     <div class="card">
-      <div class="section-title">New API key</div>
+      <div class="section-title">Wklej nowy klucz API</div>
       <div class="key-row">
         <div class="input-wrap">
-          <input type="password" id="newKey" placeholder="Paste new key here…" autocomplete="off" spellcheck="false">
-          <button class="eye-btn" onclick="togglePwd('newKey')" title="Show / hide">👁</button>
+          <input type="password" id="newKey" placeholder="Wklej nowy klucz…" autocomplete="off" spellcheck="false">
+          <button class="eye-btn" onclick="togglePwd('newKey')" title="Pokaż / ukryj">👁</button>
         </div>
-        <button class="btn" onclick="pasteKey()" title="Paste from clipboard">📋</button>
+        <button class="btn" onclick="pasteKey()" title="Wklej ze schowka">📋</button>
       </div>
       <div class="btn-row">
-        <button class="btn primary" id="rotateBtn" onclick="rotate()">Apply to all sources</button>
-        <button class="btn" id="validateBtn" onclick="validateKey()" title="Ping /v1/models to verify key works">✓ Test key</button>
+        <button class="btn primary" id="rotateBtn" onclick="rotate()">Zastosuj we wszystkich narzędziach</button>
+        <button class="btn" id="validateBtn" onclick="validateKey()" title="Pinguje /v1/models — sprawdza czy klucz działa">✓ Przetestuj klucz</button>
         <span id="rotStatus" style="font-size:0.82rem;color:var(--muted);"></span>
       </div>
       <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
-        <span style="font-size:0.75rem;color:var(--muted);white-space:nowrap;">Test URL:</span>
+        <span style="font-size:0.75rem;color:var(--muted);white-space:nowrap;">Adres serwera:</span>
         <input type="url" id="validateUrl" value="http://localhost:1234/v1"
                style="max-width:260px;font-size:0.8rem;font-family:monospace;"
                placeholder="http://localhost:1234/v1">
@@ -319,7 +319,7 @@ textarea { resize: vertical; min-height: 90px; font-family: monospace; font-size
   <div id="pane-settings" class="pane">
 
     <div class="card">
-      <div class="section-title">n8n connection</div>
+      <div class="section-title">Połączenie z n8n</div>
       <div class="settings-group">
         <label>API Key <span style="font-size:0.75rem;font-weight:400;">(n8n → Settings → n8n API)</span></label>
         <div class="input-wrap" style="margin-bottom:10px;">
@@ -336,20 +336,16 @@ textarea { resize: vertical; min-height: 90px; font-family: monospace; font-size
 
     <!-- Connected tools (driver registry) -->
     <div class="card">
-      <div class="section-title">Connected tools
-        <span style="font-weight:400;font-size:0.7rem;color:var(--muted);text-transform:none;letter-spacing:0;margin-left:6px;">
-          — detected tools are auto-included in rotation
-        </span>
-      </div>
+      <div class="section-title">Podłączone narzędzia</div>
       <p class="info-box" style="margin-bottom:14px;">
-        Toggle off to exclude a tool from rotation. For non-standard installs, override the file path.
-        Auto-detected tools (Cursor, Windsurf) have fixed paths.
+        Narzędzia z zielonym znaczkiem są wykryte na tym komputerze i automatycznie otrzymują nowy klucz przy rotacji.
+        Odznacz, żeby wykluczyć z rotacji. Dla niestandardowych ścieżek instalacji możesz ręcznie podać lokalizację pliku.
       </p>
       <div id="driverSettings"><div class="loading">Loading…</div></div>
     </div>
 
     <div class="card">
-      <div class="section-title">OpenRouter auto-rotation <span style="font-size:0.7rem;font-weight:400;color:var(--ok);">⚡ API supported</span></div>
+      <div class="section-title">OpenRouter — automatyczna rotacja <span style="font-size:0.7rem;font-weight:400;color:var(--ok);">⚡ Management API</span></div>
       <div class="settings-group">
         <label>Management API Key <span style="font-size:0.75rem;font-weight:400;">(openrouter.ai → Keys → Create management key)</span></label>
         <div class="input-wrap">
@@ -360,8 +356,8 @@ textarea { resize: vertical; min-height: 90px; font-family: monospace; font-size
     </div>
 
     <div class="card">
-      <div class="section-title">Scheduled auto-rotation
-        <span style="font-size:0.7rem;font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0;margin-left:6px;">— requires OpenRouter Management API key</span>
+      <div class="section-title">Harmonogram rotacji
+        <span style="font-size:0.7rem;font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0;margin-left:6px;">— wymaga klucza OpenRouter Management API</span>
       </div>
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.88rem;">
@@ -390,19 +386,21 @@ textarea { resize: vertical; min-height: 90px; font-family: monospace; font-size
     </div>
 
     <div class="card">
-      <div class="section-title">Rotation targets (n8n)</div>
+      <div class="section-title">n8n — które credentiale rotować?</div>
       <p class="info-box" style="margin-bottom:14px;">
-        Credentials checked here are included in bulk key rotation (<em>Apply to all sources</em>).
-        Optionally specify a <strong>Base URL</strong> for OpenAI-compatible endpoints (e.g. LM Studio).
+        Zaznaczone credentiale dostaną nowy klucz przy każdej rotacji.
+        Jeśli credential łączy się z lokalnym serwerem LLM, ustaw poniżej jego adres — np. <code style="font-size:0.8em;">http://localhost:1234/v1</code>.
       </p>
       <div class="btn-row" style="margin-bottom:12px;margin-top:0;">
-        <button class="btn sm" onclick="discoverForSettings()">📡 Load from n8n</button>
+        <button class="btn sm" onclick="discoverForSettings()" title="Pobiera listę credentials z twojego n8n przez API">📥 Załaduj credentials z n8n</button>
       </div>
-      <div id="rotTargets"><div class="empty" style="padding:14px 0;">No rotation targets yet.</div></div>
+      <div id="rotTargets"><div class="empty" style="padding:14px 0;">
+        Brak credentials. Kliknij <strong>Załaduj credentials z n8n</strong> żeby pobrać listę z twojego n8n.
+      </div></div>
     </div>
 
     <div style="text-align:right; margin-top: 4px;">
-      <button class="btn primary" onclick="saveSettings()">Save settings</button>
+      <button class="btn primary" onclick="saveSettings()">Zapisz ustawienia</button>
     </div>
 
   </div>
@@ -918,7 +916,10 @@ const LLM_PRESETS = [
 ];
 
 function presetBtnsHtml() {
-  return `<div class="preset-btns">` +
+  return `<div style="font-size:0.75rem;color:var(--muted);margin-bottom:5px;margin-top:2px;">
+    Adres serwera (Base URL) — kliknij preset lub wpisz ręcznie:
+  </div>
+  <div class="preset-btns">` +
     LLM_PRESETS.map(p => `<button type="button" class="preset-btn"
       onclick="this.closest('.rot-url-wrap').querySelector('.rot-url-input').value='${escA(p.url)}'"
     >${esc(p.label)}</button>`).join('') +
