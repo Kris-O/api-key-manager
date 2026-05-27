@@ -164,7 +164,9 @@ textarea { resize: vertical; min-height: 90px; font-family: monospace; font-size
 .rot-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 8px; }
 .rot-item-header { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .rot-item-header input[type=checkbox] { width: 15px; height: 15px; flex-shrink: 0; cursor: pointer; accent-color: var(--accent); }
-.rot-item-name  { flex: 1; font-size: 0.88rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rot-item-title-wrap { flex: 1; min-width: 0; }
+.rot-item-name     { font-size: 0.88rem; font-weight: 600; }
+.rot-item-credname { font-size: 0.73rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
 .rot-url-wrap   { margin-top: 8px; display: none; }
 .rot-url-wrap input { font-size: 0.82rem; font-family: monospace; margin-bottom: 6px; }
 .rot-item.open .rot-url-wrap { display: block; }
@@ -531,6 +533,9 @@ const STRINGS = {
     noTargets:         'No rotation targets yet — click "Load credentials from n8n".',
     saveSettings:      'Save settings',
 
+    /* Rotation item — generic type label */
+    rotItemLabel:    'Open Source LLM account',
+
     /* Preset buttons section label (Open Source LLM) */
     llmServerUrl:    'Open Source LLM server URL — click a preset or type manually:',
     baseUrlPlaceholder:'Base URL (e.g. http://localhost:1234/v1)',
@@ -683,6 +688,9 @@ const STRINGS = {
     loadFromN8n:       '📥 Załaduj credentials z n8n',
     noTargets:         'Brak credentials. Kliknij „Załaduj credentials z n8n" żeby pobrać listę z twojego n8n.',
     saveSettings:      'Zapisz ustawienia',
+
+    /* Rotation item — generic type label */
+    rotItemLabel:     'Konto Open Source LLM',
 
     /* Preset buttons section label (Open Source LLM) */
     llmServerUrl:     'Adres serwera Open Source LLM — kliknij preset lub wpisz ręcznie:',
@@ -1300,7 +1308,10 @@ function renderRotTargets(targets) {
       <div class="rot-item-header">
         <input type="checkbox" class="rot-check" checked
                onchange="this.closest('.rot-item').classList.toggle('open',this.checked)">
-        <label class="rot-item-name" title="${escA(c.name)}">${esc(c.name)}</label>
+        <div class="rot-item-title-wrap">
+          <div class="rot-item-name" data-i18n="rotItemLabel">${esc(S('rotItemLabel'))}</div>
+          <div class="rot-item-credname" title="${escA(c.name)}">${esc(c.name)}</div>
+        </div>
         <button class="btn sm danger" onclick="this.closest('.rot-item').remove()">✕</button>
       </div>
       <div class="rot-url-wrap">
@@ -1340,7 +1351,10 @@ async function discoverForSettings() {
     <div class="rot-item" data-cred-id="${escA(c.id)}" data-cred-name="${escA(c.name)}">
       <div class="rot-item-header">
         <input type="checkbox" class="rot-check" onchange="this.closest('.rot-item').classList.toggle('open',this.checked)">
-        <label class="rot-item-name" title="${escA(c.name)}">${esc(c.name)}</label>
+        <div class="rot-item-title-wrap">
+          <div class="rot-item-name" data-i18n="rotItemLabel">${esc(S('rotItemLabel'))}</div>
+          <div class="rot-item-credname" title="${escA(c.name)}">${esc(c.name)}</div>
+        </div>
         <span class="type-badge" style="background:${typeColor(c.type)};font-size:0.7rem;padding:2px 7px;">${esc(c.type)}</span>
         <button class="btn sm danger" onclick="this.closest('.rot-item').remove()">✕</button>
       </div>
