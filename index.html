@@ -985,12 +985,22 @@ async function discoverForSettings() {
 async function testN8n() {
   const key = (document.getElementById('s-apiKey').value || '').trim();
   const url = (document.getElementById('s-baseUrl').value || '').trim() || 'http://localhost:5678';
-  if (!key) { toast('Enter API key first', 'error'); return; }
-  await fetch('/api/config', { method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ n8nApiKey: key, n8nBaseUrl: url }) });
-  const d = await fetch('/api/n8n/discover').then(r => r.json()).catch(e => ({ ok:false, error:e.message }));
-  if (d.ok) toast(`✓ Connected — ${d.credentials.length} credential(s)`, 'ok');
-  else      toast('✗ ' + d.error, 'error');
+  if (!key) { toast('Enter n8n API key first', 'error'); return; }
+
+  const btn = document.querySelector('#pane-settings button[onclick="testN8n()"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Testing…'; }
+
+  try {
+    await fetch('/api/config', { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ n8nApiKey: key, n8nBaseUrl: url }) });
+    const d = await fetch('/api/n8n/discover').then(r => r.json()).catch(e => ({ ok:false, error:e.message }));
+    if (d.ok) toast(`✓ Connected — ${d.credentials.length} credential(s)`, 'ok');
+    else      toast('✗ ' + d.error, 'error');
+  } catch(e) {
+    toast('✗ Cannot reach server — is Key Manager running?', 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Test connection'; }
+  }
 }
 
 async function saveSettings() {
