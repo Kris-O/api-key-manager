@@ -1,6 +1,9 @@
 # Runtime config — contains API keys, NEVER commit
 app-config.json
 
+# Rotation log — local history, not for version control
+rotation-log.json
+
 # File backups created by Key Manager
 *.bak
 

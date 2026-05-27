@@ -6,10 +6,12 @@ const path    = require('path');
 const os      = require('os');
 const { execSync } = require('child_process');
 
-const VERSION  = '2.2.0';
+const VERSION  = '2.3.0';
 const PORT     = Number(process.env.KM_PORT) || 7432;
 const DIR      = __dirname;
-const CFG_PATH = path.join(DIR, 'app-config.json');
+const CFG_PATH     = path.join(DIR, 'app-config.json');
+const HISTORY_PATH = path.join(DIR, 'rotation-log.json');
+const HISTORY_MAX  = 30;
 
 const APPDATA = process.env.APPDATA || path.join(os.homedir(), '.config');
 const HOME    = os.homedir();
@@ -224,6 +226,26 @@ const DRIVERS = [
     },
   },
 
+  // ── Claude Code CLI ────────────────────────────────────────
+  {
+    id: 'claudeCode', label: 'Claude Code CLI', icon: '🔶', group: 'AI Tools',
+    defaultPath: path.join(HOME, '.claude', 'settings.json'),
+    configurable: true,
+    read(p) {
+      try { return JSON.parse(fs.readFileSync(p, 'utf8')).apiKey || null; }
+      catch { return null; }
+    },
+    write(p, newKey) {
+      if (!fs.existsSync(p)) return { ok: false, error: 'File not found' };
+      try {
+        const d = JSON.parse(fs.readFileSync(p, 'utf8'));
+        d.apiKey = newKey;
+        backupAndWrite(p, JSON.stringify(d, null, 2));
+        return { ok: true };
+      } catch (e) { return { ok: false, error: e.message }; }
+    },
+  },
+
   // ── VS Code ────────────────────────────────────────────────
   {
     id: 'vscodeSettings', label: 'VS Code — settings.json', icon: '💙', group: 'Editors',
@@ -359,6 +381,18 @@ function loadCfg() {
   } catch { return JSON.parse(JSON.stringify(DEFAULTS)); }
 }
 function saveCfg(c) { fs.writeFileSync(CFG_PATH, JSON.stringify(c, null, 2), 'utf8'); }
+
+// ─── Rotation history ──────────────────────────────────────────
+function loadHistory() {
+  try { return JSON.parse(fs.readFileSync(HISTORY_PATH, 'utf8')); }
+  catch { return []; }
+}
+function appendHistory(entry) {
+  const h = loadHistory();
+  h.unshift({ ts: new Date().toISOString(), ...entry });
+  if (h.length > HISTORY_MAX) h.length = HISTORY_MAX;
+  try { fs.writeFileSync(HISTORY_PATH, JSON.stringify(h, null, 2), 'utf8'); } catch {}
+}
 
 // ─── Misc helpers ──────────────────────────────────────────────
 function mask(k) {
@@ -516,6 +550,64 @@ const srv = http.createServer(async (req, res) => {
     return;
   }
 
+  // ── GET /api/history ──────────────────────────────────────
+  if (method === 'GET' && url === '/api/history') {
+    json(res, loadHistory());
+    return;
+  }
+
+  // ── POST /api/history/clear ────────────────────────────────
+  if (method === 'POST' && url === '/api/history/clear') {
+    try { fs.writeFileSync(HISTORY_PATH, '[]', 'utf8'); } catch {}
+    json(res, { ok: true });
+    return;
+  }
+
+  // ── POST /api/validate-key ────────────────────────────────
+  if (method === 'POST' && url === '/api/validate-key') {
+    try {
+      const { key, url: targetUrl } = JSON.parse(await readBody(req));
+      if (!key) return json(res, { ok: false, message: 'No key provided' }, 400);
+
+      const base    = new URL((targetUrl || 'http://localhost:1234/v1').replace(/\/+$/, ''));
+      const mod     = base.protocol === 'https:' ? https : http;
+      const modelsPath = base.pathname.replace(/\/+$/, '') + '/models';
+
+      const result = await new Promise(resolve => {
+        const opts = {
+          hostname: base.hostname,
+          port:     base.port || (base.protocol === 'https:' ? 443 : 80),
+          path:     modelsPath,
+          method:   'GET',
+          headers:  { 'Authorization': `Bearer ${key}`, 'Accept': 'application/json' },
+        };
+        const r = mod.request(opts, resp => {
+          let data = '';
+          resp.on('data', c => data += c);
+          resp.on('end', () => {
+            if (resp.statusCode === 200) {
+              try {
+                const body = JSON.parse(data);
+                const count = (body.data || body.models || []).length;
+                resolve({ ok: true, status: 200, message: `${count} model(s) available` });
+              } catch { resolve({ ok: true, status: 200, message: 'Endpoint OK' }); }
+            } else if (resp.statusCode === 401) {
+              resolve({ ok: false, status: 401, message: 'Invalid key (401 Unauthorized)' });
+            } else {
+              resolve({ ok: false, status: resp.statusCode, message: `HTTP ${resp.statusCode}` });
+            }
+          });
+        });
+        r.setTimeout(5000, () => { r.destroy(); resolve({ ok: false, message: 'Timeout (5 s)' }); });
+        r.on('error', e => resolve({ ok: false, message: e.message }));
+        r.end();
+      });
+
+      json(res, result);
+    } catch(e) { json(res, { ok: false, message: e.message }, 500); }
+    return;
+  }
+
   // ── GET /api/config  (masked) ──────────────────────────────
   if (method === 'GET' && url === '/api/config') {
     const cfg  = loadCfg();
@@ -643,7 +735,9 @@ const srv = http.createServer(async (req, res) => {
         });
       }
 
-      json(res, { ok: results.every(r => r.ok), results });
+      const allOk = results.every(r => r.ok);
+      appendHistory({ source: 'manual', keyPreview: mask(newKey), ok: allOk, results });
+      json(res, { ok: allOk, results });
     } catch (e) { json(res, { ok: false, error: e.message }, 500); }
     return;
   }
@@ -706,7 +800,9 @@ const srv = http.createServer(async (req, res) => {
       cfg.openRouterLastKeyHash = newHash;
       saveCfg(cfg);
 
-      json(res, { ok: results.every(r => r.ok), newKeyMasked: mask(newKey), newKeyHash: newHash, results, deleteResult });
+      const allOk = results.every(r => r.ok);
+      appendHistory({ source: 'openrouter', keyPreview: mask(newKey), ok: allOk, results });
+      json(res, { ok: allOk, newKeyMasked: mask(newKey), newKeyHash: newHash, results, deleteResult });
     } catch (e) { json(res, { ok: false, error: e.message }, 500); }
     return;
   }
