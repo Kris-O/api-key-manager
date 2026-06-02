@@ -466,6 +466,59 @@ const DRIVERS = [
     },
   },
 
+  // ── Codex CLI ──────────────────────────────────────────────
+  {
+    id: 'codex', label: 'Codex CLI', icon: '🧩', group: 'AI Tools',
+    defaultPath: path.join(HOME, '.codex', 'config.toml'),
+    configurable: true,
+    // Codex stores the key as `experimental_bearer_token` inside a
+    // [model_providers.<name>] section of config.toml.
+    // (Standard usage relies on OPENAI_API_KEY / OPENROUTER_API_KEY env vars;
+    //  this driver targets users who have an explicit inline token.)
+    read(p) {
+      try {
+        const m = fs.readFileSync(p, 'utf8').match(/experimental_bearer_token\s*=\s*"([^"]+)"/);
+        return m ? m[1] : null;
+      } catch { return null; }
+    },
+    write(p, newKey) {
+      if (!fs.existsSync(p)) return { ok: false, error: 'File not found' };
+      try {
+        const txt    = fs.readFileSync(p, 'utf8');
+        const newTxt = txt.replace(/(experimental_bearer_token\s*=\s*")[^"]+(")/g, `$1${newKey}$2`);
+        if (newTxt === txt) return { ok: true, detail: 'skipped — experimental_bearer_token not found in config.toml' };
+        backupAndWrite(p, newTxt);
+        return { ok: true };
+      } catch (e) { return { ok: false, error: e.message }; }
+    },
+  },
+
+  // ── OpenClaw ────────────────────────────────────────────────
+  {
+    id: 'openclaw', label: 'OpenClaw', icon: '🦞', group: 'AI Tools',
+    defaultPath: path.join(HOME, '.openclaw', 'openclaw.json'),
+    configurable: true,
+    // OpenClaw stores provider API keys inside its JSON5 config under
+    // the `env` object, e.g. { env: { OPENROUTER_API_KEY: "sk-or-..." } }
+    // Keys may be quoted or unquoted (JSON5 format).
+    read(p) {
+      try {
+        const m = fs.readFileSync(p, 'utf8').match(/"?OPENROUTER_API_KEY"?\s*:\s*"([^"]+)"/);
+        return m ? m[1] : null;
+      } catch { return null; }
+    },
+    write(p, newKey) {
+      if (!fs.existsSync(p)) return { ok: false, error: 'File not found' };
+      try {
+        const txt    = fs.readFileSync(p, 'utf8');
+        const newTxt = txt.replace(/("?OPENROUTER_API_KEY"?\s*:\s*")[^"]+(")/g, `$1${newKey}$2`);
+        if (newTxt === txt) return { ok: true, detail: 'skipped — OPENROUTER_API_KEY not found in openclaw.json' };
+        backupAndWrite(p, newTxt);
+        return { ok: true };
+      } catch (e) { return { ok: false, error: e.message }; }
+    },
+  },
+
   // ── .env file ──────────────────────────────────────────────
   {
     id: 'dotenv', label: '.env file', icon: '📄', group: 'Custom',
