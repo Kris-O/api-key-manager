@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev":   "node --watch server.js"
+    "dev":   "node --watch server.js",
+    "test":  "node --test"
   },
   "keywords": ["n8n", "claude", "lm-studio", "api-key", "credential-manager", "devtools"],
   "author": "Kris-O",

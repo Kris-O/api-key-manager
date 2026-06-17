@@ -1167,5 +1167,7 @@ srv.listen(PORT, '127.0.0.1', () => {
   console.log('\n' + '─'.repeat(banner.length + 4));
   console.log('  ' + banner);
   console.log('─'.repeat(banner.length + 4) + '\n');
-  try { execSync(process.platform === 'win32' ? `start http://localhost:${PORT}` : `open http://localhost:${PORT}`); } catch {}
+  if (process.env.KM_NO_OPEN !== '1') {
+    try { execSync(process.platform === 'win32' ? `start http://localhost:${PORT}` : `open http://localhost:${PORT}`); } catch {}
+  }
 });

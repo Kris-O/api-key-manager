@@ -60,13 +60,21 @@ Any other credential type can be edited using the raw JSON editor.
 
 ```bash
 git clone https://github.com/Kris-O/api-key-manager.git
-cd key-manager
+cd api-key-manager
 node server.js
 ```
 
 The app opens automatically at **http://localhost:7432**.
 
 On Windows you can also double-click `run.bat`.
+
+### Tests
+
+```bash
+npm test
+```
+
+The test suite starts Key Manager on a temporary local port with browser auto-open disabled, then checks the main page and core API endpoints.
 
 ### Custom port
 

@@ -7,17 +7,18 @@
 <style>
 /* ── Variables ───────────────────────────────────────────────── */
 :root {
-  --bg:        #0f1117;
-  --surface:   #1a1d27;
-  --surface2:  #222636;
-  --border:    #2d3150;
-  --accent:    #6366f1;
-  --accent-h:  #4f52d4;
+  --bg:        #101214;
+  --surface:   #181b1f;
+  --surface2:  #22262c;
+  --border:    #343a42;
+  --accent:    #14b8a6;
+  --accent-h:  #0f9488;
   --ok:        #22c55e;
   --warn:      #f59e0b;
   --err:       #ef4444;
   --text:      #e2e8f0;
   --muted:     #94a3b8;
+  --muted2:    #64748b;
   --radius:    8px;
   --font:      'Segoe UI', system-ui, sans-serif;
 }
@@ -25,14 +26,17 @@
 body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; line-height: 1.5; min-height: 100vh; }
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
+button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* ── Layout ──────────────────────────────────────────────────── */
-.app { max-width: 860px; margin: 0 auto; padding: 24px 16px 48px; }
+.app { max-width: 1080px; margin: 0 auto; padding: 24px 18px 48px; }
 
 /* ── Header ──────────────────────────────────────────────────── */
 header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
 .logo { font-size: 1.3rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
 .version { font-size: 0.7rem; color: var(--muted); background: var(--surface2); padding: 2px 7px; border-radius: 99px; }
+.header-actions { display: flex; align-items: center; gap: 12px; }
+.local-note { color: var(--muted); font-size: 0.8rem; white-space: nowrap; }
 
 /* ── Language toggle ─────────────────────────────────────────── */
 .lang-toggle { display: flex; border: 1px solid var(--border); border-radius: 99px; overflow: hidden; }
@@ -41,8 +45,8 @@ header { display: flex; align-items: center; justify-content: space-between; mar
 .lang-btn.active { background: var(--accent); color: #fff; }
 
 /* ── Tabs ────────────────────────────────────────────────────── */
-.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
-.tab-btn { background: none; border: none; cursor: pointer; color: var(--muted); font: inherit; font-size: 0.9rem; padding: 8px 16px; border-bottom: 2px solid transparent; transition: color .15s, border-color .15s; }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 24px; overflow-x: auto; scrollbar-width: thin; }
+.tab-btn { background: none; border: none; cursor: pointer; color: var(--muted); font: inherit; font-size: 0.9rem; padding: 9px 16px; border-bottom: 2px solid transparent; transition: color .15s, border-color .15s; white-space: nowrap; }
 .tab-btn:hover  { color: var(--text); }
 .tab-btn.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
 .pane { display: none; }
@@ -51,6 +55,11 @@ header { display: flex; align-items: center; justify-content: space-between; mar
 /* ── Card ────────────────────────────────────────────────────── */
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
 .section-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 14px; }
+.section-head { display: flex; align-items: center; gap: 7px; margin-bottom: 14px; }
+.section-head .section-title { margin-bottom: 0; }
+.context-box { background: rgba(20,184,166,.07); border: 1px solid rgba(20,184,166,.22); border-radius: var(--radius); padding: 11px 13px; color: var(--text); font-size: 0.84rem; margin-bottom: 14px; }
+.context-box strong { color: #99f6e4; font-weight: 700; }
+.muted-note { color: var(--muted); font-size: 0.78rem; margin-top: 8px; }
 
 /* ── Source rows ─────────────────────────────────────────────── */
 .source-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
@@ -63,6 +72,58 @@ header { display: flex; align-items: center; justify-content: space-between; mar
 .source-label   { flex: 1; font-size: 0.88rem; }
 .source-preview { font-family: monospace; font-size: 0.8rem; color: var(--muted); }
 .source-group-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); padding: 12px 0 4px; }
+.status-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+.summary-pill { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 9px 11px; min-width: 0; }
+.summary-value { display: block; font-size: 1.05rem; font-weight: 700; line-height: 1.1; }
+.summary-label { display: block; color: var(--muted); font-size: 0.74rem; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.summary-pill.ok .summary-value { color: var(--ok); }
+.summary-pill.warn .summary-value { color: var(--warn); }
+.summary-pill.muted .summary-value { color: var(--muted); }
+.target-summary { background: #0a0c12; border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; margin-top: 12px; font-size: 0.82rem; color: var(--muted); }
+.target-summary strong { color: var(--text); font-weight: 600; }
+.target-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+.target-chip { background: var(--surface2); border: 1px solid var(--border); border-radius: 99px; color: var(--text); padding: 2px 9px; font-size: 0.76rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.target-chip.warn { color: var(--warn); border-color: rgba(245,158,11,.45); }
+
+/* ── Help tooltips ───────────────────────────────────────────── */
+.help-tip { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border: 1px solid var(--border); border-radius: 50%; color: var(--muted); background: var(--surface2); font-size: 0.72rem; font-weight: 700; cursor: help; flex-shrink: 0; }
+.help-tip:hover, .help-tip:focus-visible { color: var(--text); border-color: var(--accent); }
+.help-tip::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 9px);
+  transform: translateX(-50%);
+  width: min(340px, calc(100vw - 32px));
+  background: #080a0f;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  box-shadow: 0 12px 30px #000b;
+  padding: 9px 11px;
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1.4;
+  white-space: normal;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 30;
+  transition: opacity .15s, transform .15s;
+}
+.help-tip::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 4px);
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--border);
+  opacity: 0;
+  transition: opacity .15s;
+  z-index: 31;
+}
+.help-tip:hover::after, .help-tip:focus-visible::after { opacity: 1; transform: translateX(-50%) translateY(-2px); }
+.help-tip:hover::before, .help-tip:focus-visible::before { opacity: 1; }
 
 /* ── Inputs ──────────────────────────────────────────────────── */
 .input-wrap { position: relative; display: flex; }
@@ -81,7 +142,7 @@ textarea { resize: vertical; min-height: 90px; font-family: monospace; font-size
 .eye-btn:hover { color: var(--text); }
 
 /* ── Buttons ─────────────────────────────────────────────────── */
-.btn { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); cursor: pointer; font: inherit; font-size: 0.88rem; padding: 7px 14px; transition: background .15s, border-color .15s; white-space: nowrap; }
+.btn { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); cursor: pointer; font: inherit; font-size: 0.88rem; padding: 8px 14px; min-height: 36px; transition: background .15s, border-color .15s, color .15s; white-space: nowrap; }
 .btn:hover:not(:disabled) { background: var(--border); }
 .btn:disabled             { opacity: .45; cursor: not-allowed; }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
@@ -94,6 +155,10 @@ textarea { resize: vertical; min-height: 90px; font-family: monospace; font-size
 .key-row { display: flex; gap: 8px; }
 .key-row .input-wrap { flex: 1; }
 .key-row input { padding-right: 38px; font-family: monospace; }
+.server-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.server-row label { font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+.server-row input { max-width: 280px; font-size: 0.8rem; font-family: monospace; }
+#rotStatus { min-height: 20px; display: inline-flex; align-items: center; }
 
 /* ── Log ─────────────────────────────────────────────────────── */
 #log { background: #0a0c12; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; font-family: monospace; font-size: 0.82rem; max-height: 280px; overflow-y: auto; display: none; margin-top: 8px; }
@@ -219,6 +284,24 @@ textarea { resize: vertical; min-height: 90px; font-family: monospace; font-size
 #toast.show  { opacity: 1; transform: translateX(-50%) translateY(0); }
 #toast.ok    { border-color: var(--ok);  }
 #toast.error { border-color: var(--err); }
+
+@media (max-width: 720px) {
+  .app { padding: 18px 12px 36px; }
+  header { align-items: flex-start; gap: 12px; flex-direction: column; margin-bottom: 18px; }
+  .header-actions { width: 100%; justify-content: space-between; }
+  .local-note { white-space: normal; }
+  .tabs { margin-left: -12px; margin-right: -12px; padding-left: 12px; }
+  .card { padding: 16px; }
+  .section-head { align-items: flex-start; }
+  .status-summary { grid-template-columns: 1fr; }
+  .source-row, .cred-header, .driver-row, .rot-item-header { align-items: flex-start; flex-wrap: wrap; }
+  .source-preview { width: 100%; overflow-wrap: anywhere; }
+  .help-tip::after { left: auto; right: -8px; transform: none; }
+  .help-tip:hover::after, .help-tip:focus-visible::after { transform: translateY(-2px); }
+  .key-row, .s-row, .server-row { flex-direction: column; align-items: stretch; }
+  .server-row input { max-width: none; }
+  .btn-row .btn, .key-row .btn, .s-row .btn { width: 100%; justify-content: center; }
+}
 </style>
 </head>
 <body>
@@ -226,19 +309,19 @@ textarea { resize: vertical; min-height: 90px; font-family: monospace; font-size
 
   <header>
     <div class="logo">🔑 Key Manager <span class="version">v2.5</span></div>
-    <div style="display:flex;align-items:center;gap:12px;">
-      <span data-i18n="localOnly" style="color:var(--muted);font-size:0.8rem;">localhost only · zero deps</span>
+    <div class="header-actions">
+      <span class="local-note" data-i18n="localOnly">localhost only · zero deps</span>
       <div class="lang-toggle">
-        <button class="lang-btn" id="lang-en" onclick="switchLang('en')">EN</button>
-        <button class="lang-btn" id="lang-pl" onclick="switchLang('pl')">PL</button>
+        <button type="button" class="lang-btn" id="lang-en" onclick="switchLang('en')">EN</button>
+        <button type="button" class="lang-btn" id="lang-pl" onclick="switchLang('pl')">PL</button>
       </div>
     </div>
   </header>
 
-  <div class="tabs">
-    <button class="tab-btn active" data-tab="rotate"      data-i18n="tabRotate"      onclick="switchTab('rotate')">Rotacja kluczy</button>
-    <button class="tab-btn"        data-tab="credentials" data-i18n="tabCredentials" onclick="switchTab('credentials')">n8n Credentials</button>
-    <button class="tab-btn"        data-tab="settings"    data-i18n="tabSettings"    onclick="switchTab('settings')">⚙ Ustawienia</button>
+  <div class="tabs" role="tablist">
+    <button type="button" class="tab-btn active" data-tab="rotate"      role="tab" aria-selected="true"  data-i18n="tabRotate"      onclick="switchTab('rotate')">Rotacja kluczy</button>
+    <button type="button" class="tab-btn"        data-tab="credentials" role="tab" aria-selected="false" data-i18n="tabCredentials" onclick="switchTab('credentials')">n8n Credentials</button>
+    <button type="button" class="tab-btn"        data-tab="settings"    role="tab" aria-selected="false" data-i18n="tabSettings"    onclick="switchTab('settings')">⚙ Ustawienia</button>
   </div>
 
   <!-- ══════════════════════════════════════════════════════════
@@ -248,34 +331,42 @@ textarea { resize: vertical; min-height: 90px; font-family: monospace; font-size
 
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-        <span class="section-title" style="margin-bottom:0;" data-i18n="toolStatus">Status narzędzi</span>
-        <button class="btn sm" id="healthBtn" onclick="checkHealth()" data-i18n="checkKeys">🩺 Sprawdź klucze</button>
+        <div class="section-head" style="margin-bottom:0;">
+          <span class="section-title" data-i18n="toolStatus">Status narzędzi</span>
+          <span class="help-tip" tabindex="0" data-tip="" data-tip-i18n="toolStatusTip" aria-label="Help">?</span>
+        </div>
+        <button type="button" class="btn sm" id="healthBtn" onclick="checkHealth()" data-i18n="checkKeys">🩺 Sprawdź klucze</button>
       </div>
+      <p class="context-box" data-i18n-html="rotationContextHtml"></p>
+      <div id="statusSummary" class="status-summary" aria-live="polite"></div>
       <div id="sources">
         <div class="source-row"><div class="dot warn"></div><div class="source-label" data-i18n="loading">Ładowanie…</div></div>
       </div>
     </div>
 
     <div class="card">
-      <div class="section-title" data-i18n="pasteKeyTitle">Wklej nowy klucz API</div>
+      <div class="section-head">
+        <div class="section-title" data-i18n="pasteKeyTitle">Wklej nowy klucz API</div>
+        <span class="help-tip" tabindex="0" data-tip="" data-tip-i18n="pasteKeyTip" aria-label="Help">?</span>
+      </div>
       <div class="key-row">
         <div class="input-wrap">
-          <input type="password" id="newKey" data-i18n-placeholder="pasteKeyPlaceholder" placeholder="Wklej nowy klucz…" autocomplete="off" spellcheck="false">
-          <button class="eye-btn" onclick="togglePwd('newKey')" title="Show / hide">👁</button>
+          <input type="password" id="newKey" data-i18n-placeholder="pasteKeyPlaceholder" placeholder="Wklej nowy klucz…" autocomplete="off" spellcheck="false" oninput="updateRotateState()">
+          <button type="button" class="eye-btn" onclick="togglePwd('newKey')" title="Show / hide" aria-label="Show or hide key">👁</button>
         </div>
-        <button class="btn" onclick="pasteKey()" title="Paste from clipboard">📋</button>
+        <button type="button" class="btn" onclick="pasteKey()" title="Paste from clipboard" aria-label="Paste key from clipboard">📋</button>
       </div>
       <div class="btn-row">
-        <button class="btn primary" id="rotateBtn" onclick="rotate()" data-i18n="applyAll">Zastosuj we wszystkich narzędziach</button>
-        <button class="btn" id="validateBtn" onclick="validateKey()" data-i18n="testKey">✓ Przetestuj klucz</button>
-        <span id="rotStatus" style="font-size:0.82rem;color:var(--muted);"></span>
+        <button type="button" class="btn primary" id="rotateBtn" onclick="rotate()" data-i18n="applyAll" disabled>Zastosuj we wszystkich narzędziach</button>
+        <button type="button" class="btn" id="validateBtn" onclick="validateKey()" data-i18n="testKey">✓ Przetestuj klucz</button>
+        <span id="rotStatus" style="font-size:0.82rem;color:var(--muted);" aria-live="polite"></span>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
-        <span style="font-size:0.75rem;color:var(--muted);white-space:nowrap;" data-i18n="serverAddr">Adres serwera:</span>
+      <div class="server-row">
+        <label for="validateUrl" data-i18n="serverAddr">Adres serwera:</label>
         <input type="url" id="validateUrl" value="http://localhost:1234/v1"
-               style="max-width:260px;font-size:0.8rem;font-family:monospace;"
                placeholder="http://localhost:1234/v1">
       </div>
+      <div id="rotationTargetSummary" class="target-summary" aria-live="polite"></div>
     </div>
 
     <div id="log"></div>
@@ -432,7 +523,7 @@ textarea { resize: vertical; min-height: 90px; font-family: monospace; font-size
   </div>
 
 </div><!-- /.app -->
-<div id="toast"></div>
+<div id="toast" role="status" aria-live="polite"></div>
 
 <script>
 /* ══════════════════════════════════════════════════════════════
@@ -453,15 +544,25 @@ const STRINGS = {
     checkingKeys:      '🩺 Checking…',
     noSourcesDetected: 'No sources detected — check Settings.',
     notConfigured:     'not configured',
+    summaryReady:      'ready',
+    summaryAttention:  'need attention',
+    summaryConfigured: 'configured',
+    toolStatusTip:     'This list shows local apps and n8n credentials where Key Manager found a rotatable OpenAI-compatible key.',
+    rotationContextHtml:'<strong>What rotates here?</strong> A model/API provider key used by local or OpenAI-compatible tools. This is not your GitHub token, not your n8n login key, and not the OpenRouter Management API key.',
 
     /* Rotate tab — key input card */
-    pasteKeyTitle:       'Paste new API key',
-    pasteKeyPlaceholder: 'Paste new key…',
+    pasteKeyTitle:       'New model / OpenAI-compatible API key',
+    pasteKeyPlaceholder: 'Paste the new model API key…',
+    pasteKeyTip:         'Paste the key that your AI tools should use for model requests, for example LM Studio, OpenRouter, OpenAI-compatible proxies, or local LLM gateways.',
     applyAll:            'Apply to all tools',
     applying:            'Applying…',
     testKey:             '✓ Test key',
     testing:             'Testing…',
-    serverAddr:          'Server address:',
+    serverAddr:          'Endpoint for key test:',
+    targetSummaryHead:   'Apply will update:',
+    targetSummaryEmpty:  'No active rotation targets detected yet. Check Settings and configure at least one tool or n8n credential.',
+    targetSummaryMore:   '+%d more',
+    targetSummaryWarn:   'Detected but missing a stored key',
 
     /* History */
     rotHistory: 'Rotation history',
@@ -609,15 +710,25 @@ const STRINGS = {
     checkingKeys:      '🩺 Sprawdzanie…',
     noSourcesDetected: 'Nie wykryto źródeł — sprawdź Ustawienia.',
     notConfigured:     'nie skonfigurowano',
+    summaryReady:      'gotowe',
+    summaryAttention:  'wymagają uwagi',
+    summaryConfigured: 'skonfigurowane',
+    toolStatusTip:     'Ta lista pokazuje lokalne aplikacje i credentiale n8n, w których Key Manager znalazł klucz OpenAI-compatible możliwy do rotacji.',
+    rotationContextHtml:'<strong>Co tutaj rotujemy?</strong> Klucz modelu / dostawcy API używany przez lokalne albo OpenAI-compatible narzędzia. To nie jest token GitHuba, klucz logowania do n8n ani OpenRouter Management API key.',
 
     /* Rotate tab — key input card */
-    pasteKeyTitle:       'Wklej nowy klucz API',
-    pasteKeyPlaceholder: 'Wklej nowy klucz…',
+    pasteKeyTitle:       'Nowy klucz modelu / OpenAI-compatible API',
+    pasteKeyPlaceholder: 'Wklej nowy klucz API modelu…',
+    pasteKeyTip:         'Wklej klucz, którego narzędzia AI mają używać do zapytań modelowych, np. LM Studio, OpenRouter, proxy OpenAI-compatible albo lokalna bramka LLM.',
     applyAll:            'Zastosuj we wszystkich narzędziach',
     applying:            'Zapisywanie…',
     testKey:             '✓ Przetestuj klucz',
     testing:             'Testowanie…',
-    serverAddr:          'Adres serwera:',
+    serverAddr:          'Endpoint do testu klucza:',
+    targetSummaryHead:   'Kliknięcie zastosuje klucz w:',
+    targetSummaryEmpty:  'Nie wykryto jeszcze aktywnych celów rotacji. Sprawdź Ustawienia i skonfiguruj co najmniej jedno narzędzie albo credential n8n.',
+    targetSummaryMore:   '+%d więcej',
+    targetSummaryWarn:   'Wykryto, ale brak zapisanego klucza',
 
     /* History */
     rotHistory: 'Historia rotacji',
@@ -769,6 +880,12 @@ function applyI18n() {
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
     el.placeholder = S(el.dataset.i18nPlaceholder);
   });
+  document.querySelectorAll('[data-tip-i18n]').forEach(el => {
+    const msg = S(el.dataset.tipI18n);
+    el.dataset.tip = msg;
+    el.setAttribute('title', msg);
+    el.setAttribute('aria-label', msg);
+  });
 }
 
 function switchLang(lang) {
@@ -781,6 +898,7 @@ function switchLang(lang) {
   // Re-render dynamic sections with new language
   loadStatus();
   loadHistory();
+  if (document.getElementById('pane-settings')?.classList.contains('active')) loadSettings();
   if (allCreds.length) { buildFilters(); renderCreds(); }
 }
 
@@ -788,6 +906,66 @@ function switchLang(lang) {
 let schemas    = {};
 let allCreds   = [];
 let activeType = 'all';
+let activeRotationTargets = [];
+
+const DRIVER_HELP = {
+  claudeDesktop: {
+    en: 'Claude Desktop MCP config. Rotates LMSTUDIO_API_KEY or OLLAMA_API_KEY in the local-llm MCP server environment.',
+    pl: 'Konfiguracja MCP w Claude Desktop. Rotuje LMSTUDIO_API_KEY albo OLLAMA_API_KEY w env serwera MCP local-llm.',
+  },
+  claudeCode: {
+    en: 'Claude Code CLI settings. Rotates the apiKey field stored in ~/.claude/settings.json.',
+    pl: 'Ustawienia Claude Code CLI. Rotuje pole apiKey zapisane w ~/.claude/settings.json.',
+  },
+  vscodeSettings: {
+    en: 'VS Code user settings. Rotates n8n.agent.apiKey in settings.json.',
+    pl: 'Ustawienia użytkownika VS Code. Rotuje n8n.agent.apiKey w settings.json.',
+  },
+  chatModels: {
+    en: 'VS Code chat models. Rotates apiKey for local/OpenAI-compatible model entries in chatLanguageModels.json.',
+    pl: 'Modele czatu VS Code. Rotuje apiKey dla lokalnych / OpenAI-compatible modeli w chatLanguageModels.json.',
+  },
+  cursor: {
+    en: 'Cursor user settings. Rotates n8n.agent.apiKey in Cursor settings.json.',
+    pl: 'Ustawienia użytkownika Cursor. Rotuje n8n.agent.apiKey w Cursor settings.json.',
+  },
+  cursorChatModels: {
+    en: 'Cursor chat models. Rotates apiKey for local/OpenAI-compatible model entries in chatLanguageModels.json.',
+    pl: 'Modele czatu Cursor. Rotuje apiKey dla lokalnych / OpenAI-compatible modeli w chatLanguageModels.json.',
+  },
+  windsurf: {
+    en: 'Windsurf user settings. Rotates n8n.agent.apiKey in settings.json.',
+    pl: 'Ustawienia użytkownika Windsurf. Rotuje n8n.agent.apiKey w settings.json.',
+  },
+  zed: {
+    en: 'Zed editor settings. Rotates api_key values under language_models providers.',
+    pl: 'Ustawienia edytora Zed. Rotuje wartości api_key w providerach language_models.',
+  },
+  continuedev: {
+    en: 'Continue.dev config. Rotates apiKey in models, tab autocomplete, and embeddings provider entries.',
+    pl: 'Konfiguracja Continue.dev. Rotuje apiKey w modelach, autocomplete i providerze embeddings.',
+  },
+  aider: {
+    en: 'Aider config. Rotates openai-api-key in ~/.aider.conf.yml.',
+    pl: 'Konfiguracja Aider. Rotuje openai-api-key w ~/.aider.conf.yml.',
+  },
+  codex: {
+    en: 'Codex CLI config. Rotates experimental_bearer_token in ~/.codex/config.toml when you store an inline provider token.',
+    pl: 'Konfiguracja Codex CLI. Rotuje experimental_bearer_token w ~/.codex/config.toml, jeśli trzymasz token providera inline.',
+  },
+  openclaw: {
+    en: 'OpenClaw config. Rotates OPENROUTER_API_KEY in the env object inside openclaw.json.',
+    pl: 'Konfiguracja OpenClaw. Rotuje OPENROUTER_API_KEY w obiekcie env pliku openclaw.json.',
+  },
+  dotenv: {
+    en: 'Custom .env file. Rotates the OPENAI_API_KEY line in the configured file path.',
+    pl: 'Własny plik .env. Rotuje linię OPENAI_API_KEY w podanej ścieżce.',
+  },
+  n8n: {
+    en: 'Selected n8n credentials. Rotates the credential data used by workflows, not the n8n API key used to connect to n8n.',
+    pl: 'Wybrane credentiale n8n. Rotuje dane credentiali używane przez workflowy, nie klucz API n8n używany do połączenia z n8n.',
+  },
+};
 
 const TYPE_COLORS = {
   openAiApi:'#10b981', httpBasicAuth:'#3b82f6', httpHeaderAuth:'#8b5cf6',
@@ -804,7 +982,11 @@ function typeColor(t) {
 
 /* ── Tab switching ───────────────────────────────────────────── */
 function switchTab(name) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    const active = b.dataset.tab === name;
+    b.classList.toggle('active', active);
+    b.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
   document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
   document.getElementById('pane-' + name).classList.add('active');
   if (name === 'credentials' && !allCreds.length) loadCredentials();
@@ -814,6 +996,36 @@ function switchTab(name) {
 /* ── Utilities ───────────────────────────────────────────────── */
 function esc(s)  { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function escA(s) { return String(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+function driverHelp(id) {
+  const help = DRIVER_HELP[id];
+  return help?.[LANG] || help?.en || '';
+}
+
+function helpTipHtml(message) {
+  if (!message) return '';
+  return `<span class="help-tip" tabindex="0" data-tip="${escA(message)}" title="${escA(message)}" aria-label="${escA(message)}">?</span>`;
+}
+
+function renderRotationTargetSummary() {
+  const el = document.getElementById('rotationTargetSummary');
+  if (!el) return;
+
+  const ready = activeRotationTargets.filter(t => t.ready);
+  if (!ready.length) {
+    el.innerHTML = `<strong>${esc(S('targetSummaryHead'))}</strong><div class="muted-note">${esc(S('targetSummaryEmpty'))}</div>`;
+    return;
+  }
+
+  const shown = ready.slice(0, 6);
+  const more = ready.length - shown.length;
+  el.innerHTML =
+    `<strong>${esc(S('targetSummaryHead'))}</strong>` +
+    `<div class="target-list">` +
+    shown.map(t => `<span class="target-chip" title="${escA(t.help)}">${esc(t.label)}</span>`).join('') +
+    (more > 0 ? `<span class="target-chip warn">${esc(S('targetSummaryMore').replace('%d', more))}</span>` : '') +
+    `</div>`;
+}
 
 let _tt;
 function toast(msg, type = 'ok') {
@@ -829,10 +1041,17 @@ function togglePwd(id) {
   if (el) el.type = el.type === 'password' ? 'text' : 'password';
 }
 
+function updateRotateState() {
+  const key = (document.getElementById('newKey')?.value || '').trim();
+  const btn = document.getElementById('rotateBtn');
+  if (btn) btn.disabled = key.length < 6;
+}
+
 async function pasteKey() {
   try {
     const t = await navigator.clipboard.readText();
     document.getElementById('newKey').value = t.trim();
+    updateRotateState();
     toast(S('keyPasted'), 'ok');
   } catch { toast(S('clipboardBlocked'), 'error'); }
 }
@@ -841,6 +1060,46 @@ async function pasteKey() {
 async function loadStatus() {
   try {
     const all = await fetch('/api/status').then(r => r.json());
+    activeRotationTargets = all
+      .filter(s => s.id === 'n8n' || (s.exists && s.enabled))
+      .map(s => {
+        const ready = s.id === 'n8n'
+          ? Boolean(s.configured && s.credCount > 0)
+          : Boolean(s.exists && s.preview);
+        const detail = s.id === 'n8n' && s.preview ? `: ${s.preview}` : '';
+        return {
+          id: s.id,
+          label: `${s.label}${detail}`,
+          ready,
+          help: driverHelp(s.id) || S('targetSummaryWarn'),
+        };
+      });
+
+    const summary = all.reduce((acc, s) => {
+      let ready = false, attention = false, configured = false;
+      if (s.id === 'n8n') {
+        configured = Boolean(s.configured);
+        ready = Boolean(s.configured && s.credCount > 0);
+        attention = Boolean(s.configured && !s.credCount);
+      } else {
+        configured = Boolean(s.enabled && s.exists);
+        ready = Boolean(s.enabled && s.exists && s.preview);
+        attention = Boolean(s.enabled && s.exists && !s.preview);
+      }
+      if (ready) acc.ready++;
+      if (attention) acc.attention++;
+      if (configured) acc.configured++;
+      return acc;
+    }, { ready: 0, attention: 0, configured: 0 });
+
+    const summaryEl = document.getElementById('statusSummary');
+    if (summaryEl) {
+      summaryEl.innerHTML = `
+        <div class="summary-pill ok"><span class="summary-value">${summary.ready}</span><span class="summary-label">${esc(S('summaryReady'))}</span></div>
+        <div class="summary-pill warn"><span class="summary-value">${summary.attention}</span><span class="summary-label">${esc(S('summaryAttention'))}</span></div>
+        <div class="summary-pill muted"><span class="summary-value">${summary.configured}</span><span class="summary-label">${esc(S('summaryConfigured'))}</span></div>
+      `;
+    }
 
     const groups = {};
     for (const s of all) {
@@ -856,6 +1115,7 @@ async function loadStatus() {
     if (!sortedGroups.length) {
       document.getElementById('sources').innerHTML =
         `<div class="empty" style="padding:16px 0;">${esc(S('noSourcesDetected'))}</div>`;
+      renderRotationTargetSummary();
       return;
     }
 
@@ -875,12 +1135,14 @@ async function loadStatus() {
           <div class="dot ${dot}"></div>
           <div class="source-icon">${esc(s.icon || '')}</div>
           <div class="source-label">${esc(s.label)}</div>
+          ${helpTipHtml(driverHelp(s.id))}
           <div class="source-preview">${s.preview
             ? esc(s.preview)
             : `<span style="color:var(--err);font-size:0.78rem;">${esc(S('notConfigured'))}</span>`}</div>
         </div>`;
       }).join('')
     ).join('');
+    renderRotationTargetSummary();
   } catch(e) { console.error(e); }
 }
 
@@ -919,7 +1181,7 @@ async function rotate() {
     loadStatus();
     loadHistory();
   } catch(e) { toast('Error: ' + e.message, 'error'); }
-  finally    { btn.disabled = false; btn.textContent = S('applyAll'); }
+  finally    { btn.textContent = S('applyAll'); updateRotateState(); }
 }
 
 /* ── Key validation ──────────────────────────────────────────── */
@@ -1254,6 +1516,7 @@ function renderDriverSettings(drivers) {
         <div class="driver-icon-label">
           <span class="driver-icon">${esc(d.icon)}</span>
           <span class="driver-name" title="${escA(d.currentPath || d.defaultPath)}">${esc(d.label)}</span>
+          ${helpTipHtml(driverHelp(d.id))}
         </div>
         <span class="driver-badge ${d.detected ? 'detected' : 'missing'}"
               data-i18n="${d.detected ? 'driverDetected' : 'driverNotFound'}">${d.detected ? S('driverDetected') : S('driverNotFound')}</span>
@@ -1474,13 +1737,14 @@ async function orAutoRotate() {
 }
 
 /* ── Init ────────────────────────────────────────────────────── */
-// Mark active lang button & apply language if not default PL
+// Mark active language button and apply static i18n content.
 document.getElementById('lang-' + LANG).classList.add('active');
-if (LANG !== 'pl') applyI18n();
+applyI18n();
 
 loadStatus();
 loadSettings();
 loadHistory();
+updateRotateState();
 </script>
 </body>
 </html>
